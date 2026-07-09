@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ErrorAlert from "@/components/ErrorAlert";
 import ErrorMessage from "@/components/ErrorMessage";
-import { PlusCircle, Layers, Users, LayoutKanban, ArrowRight } from "lucide-react";
+import { PlusCircle, Layers, Users, Kanban, ArrowRight } from "lucide-react";
 
 interface Workspace {
   id: string;
@@ -184,7 +184,7 @@ export default function WorkspacesPage() {
               <CardContent>
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <LayoutKanban className="h-3.5 w-3.5" />
+                    <Kanban className="h-3.5 w-3.5" />
                     {ws._count.boards} boards
                   </span>
                   <span className="flex items-center gap-1">

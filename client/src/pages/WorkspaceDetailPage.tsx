@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import ErrorAlert from "@/components/ErrorAlert";
 import ErrorMessage from "@/components/ErrorMessage";
 import BackLink from "@/components/BackLink";
-import { PlusCircle, LayoutKanban, ArrowRight, UserPlus, Users } from "lucide-react";
+import { PlusCircle, Kanban, ArrowRight, UserPlus, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -166,7 +166,7 @@ export default function WorkspaceDetailPage() {
           {/* Boards grid */}
           {boards.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <LayoutKanban className="h-12 w-12 text-muted-foreground/40 mb-4" />
+              <Kanban className="h-12 w-12 text-muted-foreground/40 mb-4" />
               <h2 className="text-lg font-semibold mb-1">No boards yet</h2>
               <p className="text-muted-foreground text-sm mb-6">
                 Create your first board to organize tasks in Kanban columns.
@@ -187,7 +187,7 @@ export default function WorkspaceDetailPage() {
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                        <LayoutKanban className="h-5 w-5 text-primary" />
+                        <Kanban className="h-5 w-5 text-primary" />
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
