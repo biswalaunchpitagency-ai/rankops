@@ -77,6 +77,9 @@ export async function registerAutoResolveWorker(boss: PgBoss): Promise<void> {
         data: { status: "open", assignedToId: null },
       });
     } else {
+      const autoReplyMode = process.env.AUTO_REPLY_MODE || "manual";
+      const isAutomatic = autoReplyMode === "automatic";
+
       try {
         await prisma.$transaction([
           prisma.reply.create({
@@ -85,19 +88,22 @@ export async function registerAutoResolveWorker(boss: PgBoss): Promise<void> {
               senderType: "agent",
               ticketId,
               userId: null,
+              isDraft: !isAutomatic,
             },
           }),
           prisma.ticket.update({
             where: { id: ticketId },
-            data: { status: "resolved" },
+            data: { status: isAutomatic ? "resolved" : "open" },
           }),
         ]);
 
-        await sendEmailJob({
-          to: senderEmail,
-          subject: `Re: ${subject}`,
-          body: response,
-        });
+        if (isAutomatic) {
+          await sendEmailJob({
+            to: senderEmail,
+            subject: `Re: ${subject}`,
+            body: response,
+          });
+        }
       } catch (error) {
         Sentry.captureException(error, {
           tags: { queue: QUEUE_NAME, ticketId },

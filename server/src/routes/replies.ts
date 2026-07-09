@@ -204,4 +204,103 @@ router.post("/polish", requireAuth, async (req, res) => {
   res.json({ body: text });
 });
 
+/** PATCH /api/tickets/:ticketId/replies/:replyId - Update reply draft body */
+router.patch("/:replyId", requireAuth, async (req, res) => {
+  const ticketId = parseId(req.params.ticketId);
+  const replyId = parseId(req.params.replyId);
+  if (!ticketId || !replyId) {
+    res.status(400).json({ error: "Invalid ticket or reply ID" });
+    return;
+  }
+
+  const { body } = req.body;
+  if (!body || typeof body !== "string") {
+    res.status(400).json({ error: "Body is required and must be a string" });
+    return;
+  }
+
+  const reply = await prisma.reply.findUnique({ where: { id: replyId } });
+  if (!reply || reply.ticketId !== ticketId) {
+    res.status(404).json({ error: "Reply not found" });
+    return;
+  }
+
+  const updatedReply = await prisma.reply.update({
+    where: { id: replyId },
+    data: { body },
+    include: { user: { select: { id: true, name: true } } },
+  });
+
+  res.json(updatedReply);
+});
+
+/** POST /api/tickets/:ticketId/replies/:replyId/approve - Approve and send a draft reply */
+router.post("/:replyId/approve", requireAuth, async (req, res) => {
+  const ticketId = parseId(req.params.ticketId);
+  const replyId = parseId(req.params.replyId);
+  if (!ticketId || !replyId) {
+    res.status(400).json({ error: "Invalid ticket or reply ID" });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+  if (!ticket) {
+    res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+
+  const reply = await prisma.reply.findUnique({ where: { id: replyId } });
+  if (!reply || reply.ticketId !== ticketId) {
+    res.status(404).json({ error: "Reply not found" });
+    return;
+  }
+
+  if (!reply.isDraft) {
+    res.status(400).json({ error: "Reply is not a draft" });
+    return;
+  }
+
+  const updatedReply = await prisma.reply.update({
+    where: { id: replyId },
+    data: {
+      isDraft: false,
+      userId: req.user.id,
+    },
+    include: { user: { select: { id: true, name: true } } },
+  });
+
+  await prisma.ticket.update({
+    where: { id: ticketId },
+    data: { status: "resolved" },
+  });
+
+  await sendEmailJob({
+    to: ticket.senderEmail,
+    subject: `Re: ${ticket.subject}`,
+    body: reply.body,
+  });
+
+  res.json(updatedReply);
+});
+
+/** DELETE /api/tickets/:ticketId/replies/:replyId - Discard a draft reply */
+router.delete("/:replyId", requireAuth, async (req, res) => {
+  const ticketId = parseId(req.params.ticketId);
+  const replyId = parseId(req.params.replyId);
+  if (!ticketId || !replyId) {
+    res.status(400).json({ error: "Invalid ticket or reply ID" });
+    return;
+  }
+
+  const reply = await prisma.reply.findUnique({ where: { id: replyId } });
+  if (!reply || reply.ticketId !== ticketId) {
+    res.status(404).json({ error: "Reply not found" });
+    return;
+  }
+
+  await prisma.reply.delete({ where: { id: replyId } });
+
+  res.status(204).end();
+});
+
 export default router;

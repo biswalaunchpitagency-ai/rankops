@@ -135,6 +135,7 @@ model Reply {
   userId     String?
   user       User?      @relation(fields: [userId], references: [id])
   createdAt  DateTime   @default(now())
+  isDraft    Boolean    @default(false)
 
   @@map("reply")
 }
