@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-09T23:45:00Z",
+  "title": "Design System: Helpdesk",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Deep Violet", "canonical": "oklch(0.527 0.280 287)", "tonalRamp": ["#3b0764", "#581c87", "#701a75", "#7c3aed", "#a78bfa", "#c084fc", "#e9d5ff", "#f3e8ff"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Pure Canvas", "canonical": "oklch(0.99 0 0)", "tonalRamp": ["#111111", "#1a1a1a", "#404040", "#737373", "#a3a3a3", "#e5e5e5", "#f5f5f5", "#ffffff"] },
+      "neutral-fg": { "role": "neutral", "displayName": "Ink Charcoal", "canonical": "oklch(0.13 0.012 270)", "tonalRamp": ["#000000", "#111111", "#222222", "#444444", "#666666", "#888888", "#aaaaaa", "#cccccc"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Title", "purpose": "Serif styling for hero, onboarding and major headlines." },
+      "body": { "displayName": "Body Sans", "purpose": "Default typography for messages, task names, descriptions, inputs." }
+    },
+    "shadows": [
+      { "name": "interactive-hover", "value": "0 2px 8px rgba(0,0,0,0.04)", "purpose": "Low-blur shadow applied on hovering cards or interactive controls." },
+      { "name": "floating-overlay", "value": "0 4px 16px rgba(0,0,0,0.08)", "purpose": "Overlay shadow for modal windows and popover menus." }
+    ],
+    "motion": [
+      { "name": "page-entrance", "value": "fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Scroll entry transition animating elements vertically." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Standard action button for high-priority user actions.",
+      "html": "<button class=\"ds-btn-primary\">Approve & Send</button>",
+      "css": ".ds-btn-primary { background: #7c3aed; color: #ffffff; padding: 8px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; } .ds-btn-primary:hover { background-color: #6d28d9; } .ds-btn-primary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary button for cancel or minor triggers.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel Action</button>",
+      "css": ".ds-btn-secondary { background: #f7f6f3; color: #111111; padding: 8px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; border: 1px solid #eaeaea; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; } .ds-btn-secondary:hover { background-color: #edebe6; } .ds-btn-secondary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Form Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text entry fields for ticket or board details.",
+      "html": "<input type=\"text\" class=\"ds-form-input\" placeholder=\"e.g., Sprint 1, Bug Fixes...\" />",
+      "css": ".ds-form-input { width: 100%; max-width: 320px; background: #ffffff; color: #111111; padding: 8px 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; border: 1px solid #eaeaea; border-radius: 4px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; } .ds-form-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2); } .ds-form-input::placeholder { color: #787774; }"
+    },
+    {
+      "name": "Kanban Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Board task card styling.",
+      "html": "<div class=\"ds-kanban-card\"><div class=\"ds-card-title\">Task Title</div><div class=\"ds-card-desc\">Clean up Vite imports and update Lucide React icons.</div></div>",
+      "css": ".ds-kanban-card { background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 16px; width: 280px; box-shadow: none; transition: border-color 0.2s, box-shadow 0.2s; cursor: pointer; } .ds-kanban-card:hover { border-color: rgba(124, 58, 237, 0.4); box-shadow: 0 2px 8px rgba(0,0,0,0.04); } .ds-card-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #111111; margin-bottom: 6px; } .ds-card-desc { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #787774; line-height: 1.4; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Editorial Workshop",
+    "overview": "Helpdesk is designed with a premium, document-like editorial aesthetic that emphasizes content structure, legibility, and restraint. Instead of relying on typical SaaS patterns, gradient fills, and heavy shadows, the interface focuses on precise alignment, generous whitespace, high typographic contrast, and a warm monochrome base.",
+    "keyCharacteristics": [
+      "Clean White Canvas: High-density flat white background (#ffffff) with minimal structural borders.",
+      "Typographic Axis: Elegant serif display titles paired with clean, geometric sans-serif user interface typography.",
+      "Restrained Spot Color: High-contrast desaturated pastels for metadata and labels, reserving the primary deep violet only for key interactions.",
+      "Crisp Structural Borders: Thin dividers and border lanes replacing ambient drop shadows for separation."
+    ],
+    "rules": [
+      { "name": "The Ten Percent Rule", "body": "Accent colors and primary deep violet fills should occupy no more than 10% of any given interface screen to maintain their focus value.", "section": "colors" },
+      { "name": "The Balanced Line Rule", "body": "Display headings must always use text-wrap: balance to prevent awkward typography wrapping on small viewports, and body paragraphs must use text-wrap: pretty to eliminate orphans.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, elevation, focus).", "section": "elevation" }
+    ],
+    "dos": [
+      "Do wrap display titles in serif typography with tight letter spacing (-0.02em).",
+      "Do use thin borders (1px solid #eaeaea) instead of shadows for card borders and section separators.",
+      "Do pair desaturated pastel backgrounds with high-contrast text for badges and chips.",
+      "Do restrict body paragraph widths to 65-75ch to ensure reading ease."
+    ],
+    "donts": [
+      "Don't use heavy dropshadows or dark outlines on cards.",
+      "Don't use neon colors or gradients for text, headings, or section backgrounds.",
+      "Don't use over-rounded pill shapes (32px+) on cards, inputs, or textareas.",
+      "Don't use border-left or border-right side stripes as colored badges.",
+      "Don't default to standard sans-serif for display headings; preserve the Serif display option."
+    ]
+  }
+}
