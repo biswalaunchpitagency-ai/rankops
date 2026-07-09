@@ -211,10 +211,17 @@ router.post("/escalate", requireAuth, async (req, res) => {
   }
   const backlogColumn = board.columns[0];
 
+  // Fetch available teams in workspace for AI classification/assignment
+  const teams = await prisma.team.findMany({
+    where: { workspaceId: data.workspaceId },
+    select: { id: true, name: true },
+  });
+
   // Call Nvidia AI to generate structured task data from ticket
   let aiTitle = ticket.subject;
   let aiDescription = ticket.body;
   let aiPriority: "no_priority" | "low" | "medium" | "high" | "urgent" = "medium";
+  let aiTeamId: string | null = null;
 
   try {
     const { text } = await generateText({
@@ -222,12 +229,13 @@ router.post("/escalate", requireAuth, async (req, res) => {
       system:
         "You are a product engineering task generator. " +
         "Given a support ticket, generate a concise engineering task. " +
-        "Return ONLY a JSON object with three keys: " +
+        "Return ONLY a JSON object with four keys: " +
         '"title" (concise task title, max 80 chars), ' +
         '"description" (detailed task description for engineers, max 500 chars), ' +
-        '"priority" (one of: no_priority, low, medium, high, urgent). ' +
+        '"priority" (one of: no_priority, low, medium, high, urgent), ' +
+        '"teamId" (the ID of the most appropriate team from the list provided, or null if none fit). ' +
         "Do not include any other text.",
-      prompt: `Support ticket subject: ${ticket.subject}\n\nBody:\n${ticket.body}`,
+      prompt: `Support ticket subject: ${ticket.subject}\n\nBody:\n${ticket.body}\n\nAvailable Teams to assign to:\n${JSON.stringify(teams)}`,
     });
 
     const parsed = JSON.parse(text.trim());
@@ -235,6 +243,9 @@ router.post("/escalate", requireAuth, async (req, res) => {
     if (parsed.description) aiDescription = parsed.description;
     if (["no_priority", "low", "medium", "high", "urgent"].includes(parsed.priority)) {
       aiPriority = parsed.priority;
+    }
+    if (parsed.teamId && teams.some((t) => t.id === parsed.teamId)) {
+      aiTeamId = parsed.teamId;
     }
   } catch (err) {
     Sentry.captureException(err);
@@ -265,10 +276,12 @@ router.post("/escalate", requireAuth, async (req, res) => {
       boardColumnId: backlogColumn.id,
       creatorId: req.user.id,
       linkedTicketId: data.ticketId,
+      teamId: aiTeamId,
     },
     include: {
       boardColumn: { select: { id: true, name: true } },
       linkedTicket: { select: { id: true, subject: true } },
+      team: { select: { id: true, name: true } },
     },
   });
 
