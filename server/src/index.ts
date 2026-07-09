@@ -14,6 +14,9 @@ import ticketsRouter from "./routes/tickets";
 import agentsRouter from "./routes/agents";
 import webhooksRouter from "./routes/webhooks";
 import repliesRouter from "./routes/replies";
+import workspacesRouter from "./routes/workspaces";
+import boardsRouter from "./routes/boards";
+import tasksRouter from "./routes/tasks";
 import { startQueue, stopQueue } from "./lib/queue";
 import { startGmailPolling, stopGmailPolling } from "./lib/poll-gmail";
 
@@ -67,6 +70,9 @@ app.use("/api/tickets", ticketsRouter);
 app.use("/api/agents", agentsRouter);
 app.use("/api/tickets/:ticketId/replies", repliesRouter);
 app.use("/api/webhooks", webhooksRouter);
+app.use("/api/workspaces", workspacesRouter);
+app.use("/api/boards", boardsRouter);
+app.use("/api/tasks", tasksRouter);
 
 Sentry.setupExpressErrorHandler(app);
 

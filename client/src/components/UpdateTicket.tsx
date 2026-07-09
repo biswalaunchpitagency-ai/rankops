@@ -4,6 +4,7 @@ import { type Ticket } from "core/constants/ticket.ts";
 import { agentTicketStatuses, statusLabel } from "core/constants/ticket-status.ts";
 import { ticketCategories, categoryLabel } from "core/constants/ticket-category.ts";
 import { Card, CardContent } from "@/components/ui/card";
+import EscalateToTaskButton from "@/components/EscalateToTaskButton";
 import {
   Select,
   SelectContent,
@@ -116,6 +117,13 @@ export default function UpdateTicket({ ticket }: UpdateTicketProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="pt-1 border-t">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
+            Engineering
+          </span>
+          <EscalateToTaskButton ticket={ticket} />
         </div>
       </CardContent>
     </Card>

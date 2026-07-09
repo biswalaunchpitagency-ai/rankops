@@ -9,6 +9,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  Layers,
 } from "lucide-react";
 
 export default function Layout() {
@@ -52,6 +53,10 @@ export default function Layout() {
           <NavLink to="/tickets" className={navLinkClass}>
             <Ticket className="h-3.5 w-3.5" />
             Tickets
+          </NavLink>
+          <NavLink to="/workspaces" className={navLinkClass}>
+            <Layers className="h-3.5 w-3.5" />
+            Workspaces
           </NavLink>
           {session?.user?.role === Role.admin && (
             <NavLink to="/users" className={navLinkClass}>

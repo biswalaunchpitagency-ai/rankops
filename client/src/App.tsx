@@ -7,6 +7,9 @@ import HomePage from "./pages/HomePage";
 import UsersPage from "./pages/UsersPage";
 import TicketsPage from "./pages/TicketsPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
+import WorkspacesPage from "./pages/WorkspacesPage";
+import WorkspaceDetailPage from "./pages/WorkspaceDetailPage";
+import KanbanBoardPage from "./pages/KanbanBoardPage";
 
 function App() {
   return (
@@ -17,6 +20,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route path="/workspaces" element={<WorkspacesPage />} />
+          <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
+          <Route path="/boards/:id" element={<KanbanBoardPage />} />
           <Route element={<AdminRoute />}>
             <Route path="/users" element={<UsersPage />} />
           </Route>
@@ -28,3 +34,4 @@ function App() {
 }
 
 export default App;
+
