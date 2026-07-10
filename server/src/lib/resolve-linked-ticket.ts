@@ -43,7 +43,7 @@ export async function registerResolveLinkedTicketWorker(boss: PgBoss): Promise<v
             `Great news! The engineering team has completed the work on your issue. ` +
             `The task "${taskTitle}" has been marked as Done.\n\n` +
             `If you have any further questions, feel free to reply to this email.\n\n` +
-            `— Helpdesk Team`,
+            `— Launchpit Agency Team`,
         },
       });
 
@@ -56,7 +56,7 @@ export async function registerResolveLinkedTicketWorker(boss: PgBoss): Promise<v
           `Great news! The engineering team has resolved your issue. ` +
           `The task "${taskTitle}" has been completed.\n\n` +
           `If you have any further questions, feel free to reply.\n\n` +
-          `— Helpdesk Team`,
+          `— Launchpit Agency Team`,
       });
 
       console.log(`[resolve-linked-ticket] Ticket ${ticketId} auto-resolved via task "${taskTitle}"`);

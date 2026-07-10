@@ -91,7 +91,7 @@ router.post("/", requireAuth, async (req, res) => {
         `${req.user.name} assigned you a task:\n\n` +
         `${task.title}\n\n` +
         `Priority: ${task.priority.replace("_", " ")}\n` +
-        `— Helpdesk Team`,
+        `— Launchpit Agency Team`,
     });
   }
 
@@ -145,7 +145,7 @@ router.put("/:id", requireAuth, async (req, res) => {
         `${req.user.name} assigned you the task:\n\n` +
         `${updated.title}\n\n` +
         `Priority: ${updated.priority.replace("_", " ")}\n` +
-        `— Helpdesk Team`,
+        `— Launchpit Agency Team`,
     });
   }
 
