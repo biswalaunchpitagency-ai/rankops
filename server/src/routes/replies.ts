@@ -149,7 +149,7 @@ router.post("/suggest", requireAuth, async (req, res) => {
   const { text } = await generateText({
     model: aiModel,
     system:
-      "You are a helpful customer support assistant for Code with Mosh. " +
+      "You are a helpful customer support assistant for Launchpit Agency. " +
       "Based on the knowledge base, ticket details, and reply history, suggest a professional draft reply to the customer.\n\n" +
       "Knowledge Base:\n" +
       knowledgeBase +
@@ -197,7 +197,7 @@ router.post("/polish", requireAuth, async (req, res) => {
       "Preserve the original meaning and keep the response concise. " +
       "Return only the improved text with no preamble or explanation. " +
       `Address the customer by their name: ${customerName}. ` +
-      `End the reply with a sign-off using the agent's name: ${agentName}, and include the link https://codewithmosh.com on its own line after the sign-off.`,
+      `End the reply with a sign-off using the agent's name: ${agentName}, and include the link https://launchpit.agency on its own line after the sign-off.`,
     prompt: data.body,
   });
 
@@ -303,4 +303,46 @@ router.delete("/:replyId", requireAuth, async (req, res) => {
   res.status(204).end();
 });
 
+/** POST /:replyId/approve — approve an AI draft reply and send it as an email */
+router.post("/:replyId/approve", requireAuth, async (req, res) => {
+  const ticketId = parseId(req.params.ticketId);
+  const replyId = parseId(req.params.replyId);
+
+  if (!ticketId || !replyId) {
+    res.status(400).json({ error: "Invalid ticket or reply ID" });
+    return;
+  }
+
+  const reply = await prisma.reply.findUnique({
+    where: { id: replyId },
+    include: { ticket: true },
+  });
+
+  if (!reply || reply.ticketId !== ticketId) {
+    res.status(404).json({ error: "Reply not found" });
+    return;
+  }
+
+  if (!reply.isDraft) {
+    res.status(400).json({ error: "Reply has already been sent" });
+    return;
+  }
+
+  // Mark as no longer a draft
+  const updated = await prisma.reply.update({
+    where: { id: replyId },
+    data: { isDraft: false },
+  });
+
+  // Send the outbound email
+  await sendEmailJob({
+    to: reply.ticket.senderEmail,
+    subject: `Re: ${reply.ticket.subject}`,
+    body: reply.body,
+  });
+
+  res.json(updated);
+});
+
 export default router;
+
