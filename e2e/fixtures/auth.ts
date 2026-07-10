@@ -51,7 +51,7 @@ export async function logout(page: Page) {
 export async function expectLoginPage(page: Page) {
   await expect(page).toHaveURL("/login");
   await expect(page.getByText("Welcome back")).toBeVisible();
-  await expect(page.getByText(/sign in to your helpdesk account/i)).toBeVisible();
+  await expect(page.getByText(/sign in to your Launchpit Agency account/i)).toBeVisible();
 }
 
 /**

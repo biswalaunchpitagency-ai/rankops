@@ -17,7 +17,7 @@ test.describe("Authentication", () => {
     test("should display login form with all elements", async ({ page }) => {
       // Check page title and description
       await expect(page.getByText("Welcome back")).toBeVisible();
-      await expect(page.getByText(/sign in to your helpdesk account/i)).toBeVisible();
+      await expect(page.getByText(/sign in to your Launchpit Agency account/i)).toBeVisible();
 
       // Check form fields
       await expect(page.getByLabel("Email")).toBeVisible();
@@ -436,8 +436,8 @@ test.describe("Authentication", () => {
       ).toBeVisible();
     });
 
-    test("should display Helpdesk branding", async ({ page }) => {
-      await expect(page.getByText("Helpdesk").first()).toBeVisible();
+    test("should display Launchpit Agency branding", async ({ page }) => {
+      await expect(page.getByText("Launchpit Agency").first()).toBeVisible();
     });
 
     test("should show navigation appropriate to user role", async ({

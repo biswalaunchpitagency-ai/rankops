@@ -65,23 +65,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] px-4 animate-in-page">
-        <div className="flex flex-col items-center mb-10">
-          <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center mb-5">
-            <span className="text-primary-foreground font-bold text-xl">H</span>
+    <div className="flex items-center justify-center min-h-screen bg-background font-sans">
+      <div className="w-full max-w-[380px] px-4 animate-in-page">
+        <div className="flex flex-col items-center mb-8">
+          <div className="h-10 w-10 rounded-sm bg-[#111111] dark:bg-[#ffffff] flex items-center justify-center mb-5">
+            <span className="text-[#ffffff] dark:text-[#111111] font-display text-xl font-normal">L</span>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-3xl font-normal tracking-tight text-foreground">
             Welcome back
           </h1>
-          <p className="text-muted-foreground text-sm mt-1.5">
-            Sign in to your helpdesk account
+          <p className="text-muted-foreground text-[13px] mt-1.5">
+            Sign in to your Launchpit Agency account
           </p>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>
+        <Card className="border border-border rounded-sm shadow-none bg-card">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold tracking-tight text-foreground">Sign in</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
               Enter your credentials to continue
             </CardDescription>
           </CardHeader>
@@ -91,24 +91,26 @@ export default function LoginPage() {
                 <ErrorAlert message={serverError} className="mb-4" />
               )}
               <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="email" className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="admin@example.com"
+                    className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-9"
                     {...register("email")}
                   />
                   {errors.email && (
                     <ErrorMessage message={errors.email.message} />
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="password" className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     placeholder="Enter your password"
+                    className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-9"
                     {...register("password")}
                   />
                   {errors.password && (
@@ -117,7 +119,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2.5 w-full mt-2"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && (
