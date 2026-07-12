@@ -58,6 +58,9 @@ export const updateTaskSchema = z.object({
   priority: z.enum(taskPriorities).optional(),
   teamId: z.string().uuid().nullable().optional(),
   assigneeId: z.string().nullable().optional(),
+  checklist: z.array(z.object({ text: z.string(), done: z.boolean() })).optional(),
+  impact: z.string().trim().max(500).optional().nullable(),
+  phase: z.string().trim().max(50).optional().nullable(),
 });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
@@ -96,7 +99,7 @@ export const updateWorkspaceSchema = z.object({
 export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
 
 export const updateMemberRoleSchema = z.object({
-  role: z.enum(["admin", "member", "viewer"]),
+  role: z.enum(["owner", "admin", "member", "viewer"]),
 });
 
 export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;

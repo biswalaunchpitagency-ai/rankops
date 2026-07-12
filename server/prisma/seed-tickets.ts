@@ -939,8 +939,20 @@ async function main() {
   // Clear existing tickets
   await prisma.ticket.deleteMany();
 
-  // Insert all 100 tickets
-  await prisma.ticket.createMany({ data: tickets });
+  // Find default workspace
+  const workspace = await prisma.workspace.findFirst();
+  if (!workspace) {
+    console.error("No workspace found to seed tickets. Please run db seed first.");
+    process.exit(1);
+  }
+
+  // Insert all 100 tickets mapped with workspaceId
+  const ticketsWithWorkspace = tickets.map((t) => ({
+    ...t,
+    workspaceId: workspace.id,
+  }));
+
+  await prisma.ticket.createMany({ data: ticketsWithWorkspace });
 
   console.log(`Seeded ${tickets.length} tickets successfully.`);
 }

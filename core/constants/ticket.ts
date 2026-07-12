@@ -11,6 +11,10 @@ export interface Ticket {
   senderName: string;
   senderEmail: string;
   assignedTo: { id: string; name: string } | null;
+  workspaceId: string;
+  clientId: string | null;
+  impact: string | null;
+  checklist: any;
   createdAt: string;
   updatedAt: string;
 }
