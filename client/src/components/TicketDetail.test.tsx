@@ -13,6 +13,10 @@ const mockTicket: Ticket = {
   senderName: "Alice Smith",
   senderEmail: "alice@example.com",
   assignedTo: null,
+  workspaceId: "test-workspace-id",
+  clientId: null,
+  impact: null,
+  checklist: null,
   createdAt: "2025-03-01T10:00:00.000Z",
   updatedAt: "2025-03-01T12:00:00.000Z",
 };
