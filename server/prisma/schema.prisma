@@ -276,6 +276,7 @@ model Task {
   linkedTicket   Ticket?     @relation(fields: [linkedTicketId], references: [id])
   clientId      String?
   client        Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  phase         String?
   estHours      Float?
   impact        String?
   checklist     Json?
