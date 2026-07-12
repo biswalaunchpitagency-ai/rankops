@@ -22,6 +22,7 @@ enum WorkspaceRole {
   owner
   admin
   member
+  viewer
 }
 
 enum TaskPriority {
@@ -69,6 +70,8 @@ model User {
   teamMemberships      Team[]           @relation("TeamMembers")
   createdTasks         Task[]           @relation("TaskCreator")
   assignedTasks        Task[]           @relation("TaskAssignee")
+  pinnedBoards         PinnedBoard[]
+  timeLogs             TimeLog[]
 
   @@map("user")
 }
@@ -117,10 +120,18 @@ model Ticket {
   senderEmail  String
   assignedToId String?
   assignedTo   User?           @relation(fields: [assignedToId], references: [id])
+  workspaceId  String
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  clientId     String?
+  client       Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  phase        String?
+  impact       String?
+  checklist    Json?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   replies      Reply[]
   linkedTask   Task?
+  timeLogs     TimeLog[]
 
   @@map("ticket")
 }
@@ -154,17 +165,25 @@ model Verification {
 // ─── Workspace / Project Management ───────────────────────────────────────────
 
 model Workspace {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  ownerId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  isPrivate   Boolean  @default(false)
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  members WorkspaceMember[]
-  teams   Team[]
-  boards  Board[]
-  tasks   Task[]
+  members       WorkspaceMember[]
+  teams         Team[]
+  boards        Board[]
+  tasks         Task[]
+  tickets       Ticket[]
+  clients       Client[]
+  sops          SOP[]
+  timeLogs      TimeLog[]
+  knowledgeBase KnowledgeBase[]
 
   @@map("workspace")
 }
@@ -202,10 +221,23 @@ model Board {
   workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   columns     BoardColumn[]
   tasks       Task[]
+  pinnedBy    PinnedBoard[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   @@map("board")
+}
+
+model PinnedBoard {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, boardId])
+  @@map("pinned_board")
 }
 
 model BoardColumn {
@@ -242,10 +274,93 @@ model Task {
   creator       User         @relation("TaskCreator", fields: [creatorId], references: [id])
   linkedTicketId Int?        @unique
   linkedTicket   Ticket?     @relation(fields: [linkedTicketId], references: [id])
+  clientId      String?
+  client        Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  estHours      Float?
+  impact        String?
+  checklist     Json?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  timeLogs      TimeLog[]
 
   @@unique([workspaceId, taskKey])
   @@map("task")
 }
 
+// ─── SEO Agency Features ───────────────────────────────────────────────────────
+
+model Client {
+  id            String    @id @default(uuid())
+  name          String
+  type          String?
+  retainerHours Float     @default(0)
+  rate          Float     @default(0)
+  status        String    @default("Active")
+  notes         String?
+  emailDomains  String[]
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tickets       Ticket[]
+  tasks         Task[]
+
+  @@map("client")
+}
+
+model SOP {
+  id          String    @id @default(uuid())
+  title       String
+  category    String
+  tools       String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  steps       SOPStep[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("sop")
+}
+
+model SOPStep {
+  id        String   @id @default(uuid())
+  text      String
+  position  Int
+  sopId     String
+  sop       SOP      @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("sop_step")
+}
+
+model TimeLog {
+  id          String    @id @default(uuid())
+  hours       Float
+  date        DateTime  @default(now())
+  note        String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      String?
+  task        Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  ticketId    Int?
+  ticket      Ticket?   @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@map("time_log")
+}
+
+model KnowledgeBase {
+  id          String    @id @default(uuid())
+  title       String
+  category    String
+  keywords    String
+  content     String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("knowledge_base")
+}
