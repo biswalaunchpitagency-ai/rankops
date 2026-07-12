@@ -54,6 +54,33 @@ export async function processIncomingEmail(data: IncomingEmailData) {
     return { type: "reply", ticket: existingTicket, reply };
   }
 
+  // Find matched client by sender email domain
+  const senderDomain = data.fromEmail.split("@")[1]?.toLowerCase();
+  let matchedClient = null;
+  let targetWorkspaceId = null;
+
+  if (senderDomain) {
+    matchedClient = await prisma.client.findFirst({
+      where: {
+        emailDomains: { has: senderDomain },
+      },
+    });
+    if (matchedClient) {
+      targetWorkspaceId = matchedClient.workspaceId;
+    }
+  }
+
+  if (!targetWorkspaceId) {
+    const firstWorkspace = await prisma.workspace.findFirst({
+      orderBy: { createdAt: "asc" },
+    });
+    if (firstWorkspace) {
+      targetWorkspaceId = firstWorkspace.id;
+    } else {
+      throw new Error("No workspace found to assign incoming email ticket");
+    }
+  }
+
   const ticket = await prisma.ticket.create({
     data: {
       subject: normalizedSubject,
@@ -62,6 +89,8 @@ export async function processIncomingEmail(data: IncomingEmailData) {
       senderName: data.fromName,
       senderEmail: data.fromEmail,
       assignedToId: AI_AGENT_ID,
+      workspaceId: targetWorkspaceId,
+      clientId: matchedClient ? matchedClient.id : null,
     },
   });
 

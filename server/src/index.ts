@@ -9,6 +9,7 @@ import rateLimit from "express-rate-limit";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import { requireAuth } from "./middleware/require-auth";
+import { requireWorkspaceMember } from "./middleware/require-workspace-member";
 import usersRouter from "./routes/users";
 import ticketsRouter from "./routes/tickets";
 import agentsRouter from "./routes/agents";
@@ -17,6 +18,11 @@ import repliesRouter from "./routes/replies";
 import workspacesRouter from "./routes/workspaces";
 import boardsRouter from "./routes/boards";
 import tasksRouter from "./routes/tasks";
+import teamsRouter from "./routes/teams";
+import clientsRouter from "./routes/clients";
+import sopsRouter from "./routes/sops";
+import timeLogsRouter from "./routes/timelogs";
+import kbRouter from "./routes/kb";
 import { startQueue, stopQueue } from "./lib/queue";
 import { startGmailPolling, stopGmailPolling } from "./lib/poll-gmail";
 
@@ -66,13 +72,22 @@ app.get("/api/me", requireAuth, (req, res) => {
 });
 
 app.use("/api/users", usersRouter);
-app.use("/api/tickets", ticketsRouter);
+// Workspace-scoped routes (for workspace context)
+app.use("/api/workspaces/:workspaceId/tickets", requireAuth, requireWorkspaceMember, ticketsRouter);
+app.use("/api/workspaces/:workspaceId/tickets/:ticketId/replies", requireAuth, requireWorkspaceMember, repliesRouter);
+// Legacy flat routes (for existing frontend pages that don't have workspace context in URL)
+app.use("/api/tickets", requireAuth, ticketsRouter);
+app.use("/api/tickets/:ticketId/replies", requireAuth, repliesRouter);
 app.use("/api/agents", agentsRouter);
-app.use("/api/tickets/:ticketId/replies", repliesRouter);
 app.use("/api/webhooks", webhooksRouter);
 app.use("/api/workspaces", workspacesRouter);
 app.use("/api/boards", boardsRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/workspaces/:workspaceId/teams", requireAuth, requireWorkspaceMember, teamsRouter);
+app.use("/api/workspaces/:workspaceId/clients", requireAuth, requireWorkspaceMember, clientsRouter);
+app.use("/api/workspaces/:workspaceId/sops", requireAuth, requireWorkspaceMember, sopsRouter);
+app.use("/api/workspaces/:workspaceId/timelogs", requireAuth, requireWorkspaceMember, timeLogsRouter);
+app.use("/api/workspaces/:workspaceId/kb", requireAuth, requireWorkspaceMember, kbRouter);
 
 Sentry.setupExpressErrorHandler(app);
 

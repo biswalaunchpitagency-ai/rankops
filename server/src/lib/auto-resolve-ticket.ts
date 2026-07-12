@@ -38,6 +38,25 @@ export async function registerAutoResolveWorker(boss: PgBoss): Promise<void> {
       data: { status: "processing" },
     });
 
+    // Fetch the ticket's workspaceId to look up workspace-specific KB articles
+    const ticketInfo = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: { workspaceId: true },
+    });
+    const workspaceId = ticketInfo?.workspaceId;
+
+    let kbContext = "";
+    if (workspaceId) {
+      const kbArticles = await prisma.knowledgeBase.findMany({
+        where: { workspaceId },
+        select: { title: true, keywords: true, content: true },
+      });
+      if (kbArticles.length > 0) {
+        kbContext = "\n\nKnowledge Base Articles for reference:\n" +
+          kbArticles.map((a) => `## ${a.title}\n${a.content}`).join("\n\n");
+      }
+    }
+
     let response: string;
     try {
       const { text } = await generateText({
@@ -46,6 +65,7 @@ export async function registerAutoResolveWorker(boss: PgBoss): Promise<void> {
           "You are a friendly and professional support agent for Launchpit Agency. " +
           "Use ONLY the following knowledge base to answer the customer's question.\n\n" +
           knowledgeBase +
+          kbContext +
           "\n\n" +
           "Guidelines for your response:\n" +
           `- Address the customer by their first name: ${firstName}\n` +

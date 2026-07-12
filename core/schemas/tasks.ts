@@ -18,6 +18,9 @@ export const createWorkspaceSchema = z.object({
     .min(1, "Slug is required")
     .max(40)
     .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
+  description: z.string().trim().max(500).optional().nullable(),
+  logoUrl: z.string().url("Invalid logo URL").or(z.string().length(0)).optional().nullable(),
+  isPrivate: z.boolean().default(false),
 });
 
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
@@ -76,9 +79,43 @@ export const escalateTicketSchema = z.object({
 export type EscalateTicketInput = z.infer<typeof escalateTicketSchema>;
 
 export const inviteMemberSchema = z.object({
-  email: z.email("Invalid email address"),
+  email: z.string().email("Invalid email address"),
   workspaceId: z.string().uuid(),
-  role: z.enum(["admin", "member"]).default("member"),
+  role: z.enum(["admin", "member", "viewer"]).default("member"),
 });
 
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+
+export const updateWorkspaceSchema = z.object({
+  name: z.string().trim().min(1, "Workspace name is required").max(80).optional(),
+  description: z.string().trim().max(500).optional().nullable(),
+  logoUrl: z.string().url("Invalid logo URL").or(z.string().length(0)).optional().nullable(),
+  isPrivate: z.boolean().optional(),
+});
+
+export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
+
+export const updateMemberRoleSchema = z.object({
+  role: z.enum(["admin", "member", "viewer"]),
+});
+
+export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;
+
+export const createColumnSchema = z.object({
+  name: z.string().trim().min(1, "Column name is required").max(50),
+});
+
+export type CreateColumnInput = z.infer<typeof createColumnSchema>;
+
+export const reorderColumnsSchema = z.object({
+  columnIds: z.array(z.string().uuid()).min(1, "At least one column is required"),
+});
+
+export type ReorderColumnsInput = z.infer<typeof reorderColumnsSchema>;
+
+export const deleteColumnSchema = z.object({
+  targetColumnId: z.string().uuid().optional(),
+});
+
+export type DeleteColumnInput = z.infer<typeof deleteColumnSchema>;
+
