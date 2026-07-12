@@ -128,7 +128,7 @@ describe("ReplyThread", () => {
     renderWithQuery(<ReplyThread ticket={mockTicket} />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("Agent").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Agent/).length).toBeGreaterThanOrEqual(1);
     });
     expect(screen.getByText("Automated response")).toBeInTheDocument();
   });

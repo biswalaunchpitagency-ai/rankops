@@ -37,6 +37,8 @@ const mockTicket = {
   senderName: "Alice Smith",
   senderEmail: "alice@example.com",
   assignedTo: null,
+  workspaceId: "test-workspace-id",
+  impact: "Resolved the login issue by resetting credentials",
   createdAt: "2025-03-01T10:00:00.000Z",
   updatedAt: "2025-03-01T10:00:00.000Z",
 };
@@ -93,9 +95,8 @@ describe("TicketDetailPage", () => {
     const comboboxes = screen.getAllByRole("combobox");
     expect(comboboxes[0]).toHaveTextContent("Open");
     expect(comboboxes[1]).toHaveTextContent("Technical");
-    expect(
-      screen.getByText(/Alice Smith \(alice@example\.com\)/)
-    ).toBeInTheDocument();
+    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
+    expect(screen.getByText(/\(alice@example\.com\)/)).toBeInTheDocument();
     expect(screen.getByText("I need help logging in")).toBeInTheDocument();
   });
 

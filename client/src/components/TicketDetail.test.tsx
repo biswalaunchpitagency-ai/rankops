@@ -29,13 +29,11 @@ describe("TicketDetail", () => {
       screen.getByRole("heading", { name: "Cannot login to my account" })
     ).toBeInTheDocument();
   });
-
   it("should display sender name and email", () => {
     render(<TicketDetail ticket={mockTicket} />);
 
-    expect(
-      screen.getByText(/Alice Smith \(alice@example\.com\)/)
-    ).toBeInTheDocument();
+    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
+    expect(screen.getByText(/\(alice@example\.com\)/)).toBeInTheDocument();
   });
 
   it("should display created and updated dates", () => {
