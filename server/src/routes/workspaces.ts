@@ -4,6 +4,7 @@ import { validate } from "../lib/validate";
 import { createWorkspaceSchema, inviteMemberSchema, updateWorkspaceSchema, updateMemberRoleSchema } from "core/schemas/tasks.ts";
 import prisma from "../db";
 import { sendEmailJob } from "../lib/send-email";
+import { seedWorkspaceDefaults } from "../lib/workspace-defaults";
 
 const router = Router();
 
@@ -36,6 +37,13 @@ router.post("/", requireAuth, async (req, res) => {
     },
     include: { members: true },
   });
+
+  // Seed default SOPs and Knowledge Base articles for the workspace
+  try {
+    await seedWorkspaceDefaults(workspace.id);
+  } catch (err) {
+    console.error("Failed to seed workspace defaults:", err);
+  }
 
   // Send welcome email (re-uses existing Nodemailer queue job)
   await sendEmailJob({
