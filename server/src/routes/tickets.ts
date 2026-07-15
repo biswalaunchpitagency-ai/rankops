@@ -4,7 +4,7 @@ import { validate } from "../lib/validate";
 import { parseId } from "../lib/parse-id";
 import { ticketListQuerySchema, updateTicketSchema } from "core/schemas/tickets.ts";
 import prisma from "../db";
-import type { Prisma } from "../generated/prisma/client";
+import { Prisma } from "../generated/prisma/client";
 import { AI_AGENT_ID } from "core/constants/ai-agent.ts";
 
 interface TicketStatsRow {
@@ -15,15 +15,107 @@ interface TicketStatsRow {
   avgResolutionTime: number;
 }
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
-router.get("/stats", requireAuth, async (_req, res) => {
-  const [row] = await prisma.$queryRaw<
-    [TicketStatsRow]
-  >`SELECT * FROM get_ticket_stats(${AI_AGENT_ID})`;
+const SAMPLE_EMAILS = [
+  {name:'Rachel Kim', from:'rachel@acmestore.com', subject:'Blog pages showing 404 in Search Console', body:'Hi, Search Console is reporting a spike in 404 errors on our blog section since Tuesday. Please investigate.'},
+  {name:'Omar Haddad', from:'omar@bluerocksaas.com', subject:'Can we get a refund for the extra hours billed?', body:'Hello, our June invoice shows 6 extra hours beyond the retainer that we did not approve. Can you review?'},
+  {name:'Jess Malone', from:'jess@urbannest.com', subject:'Question about next month content plan', body:'Hi team! What topics are planned for next month? Also, when is our monthly report coming?'},
+  {name:'Leo Grant', from:'leo@fitfuel.com', subject:'Site speed feels slow after new theme', body:'Hey, we installed a new theme and pages feel slower. Can your technical team take a look?'}
+];
+
+router.post("/simulate-email", requireAuth, async (req, res) => {
+  const workspaceId = req.workspaceId!;
+  
+  // Pick next email
+  const index = Math.floor(Math.random() * SAMPLE_EMAILS.length);
+  const emailSample = SAMPLE_EMAILS[index];
+
+  // Map simulated email to a client in this workspace by domain
+  const domain = emailSample.from.split("@")[1];
+  const client = await prisma.client.findFirst({
+    where: { workspaceId, name: { contains: domain.split(".")[0], mode: "insensitive" } }
+  });
+
+  // Assign category based on keywords
+  const category = emailSample.subject.includes("refund") || emailSample.body.includes("refund")
+    ? "refund_request"
+    : emailSample.subject.includes("speed") || emailSample.body.includes("404")
+    ? "technical_question"
+    : "general_question";
+
+  // Create ticket
+  const ticket = await prisma.ticket.create({
+    data: {
+      subject: emailSample.subject,
+      senderName: emailSample.name,
+      senderEmail: emailSample.from,
+      status: "new", // hidden from standard board, visible in inbox
+      category: category as any,
+      workspaceId,
+      clientId: client?.id || null,
+      body: emailSample.body
+    }
+  });
+
+  res.json({ ok: true, ticket });
+});
+
+router.get("/stats", requireAuth, async (req, res) => {
+  const workspaceId = req.workspaceId ?? null;
+
+  const [row] = workspaceId
+    ? await prisma.$queryRaw<[TicketStatsRow]>`
+        WITH counts AS (
+          SELECT
+            COUNT(*) FILTER (WHERE status IN ('open', 'resolved', 'closed'))  AS total_tickets,
+            COUNT(*) FILTER (WHERE status = 'open')                           AS open_tickets,
+            COUNT(*) FILTER (WHERE status = 'resolved' AND "assignedToId" = ${AI_AGENT_ID}) AS resolved_by_ai,
+            COUNT(*) FILTER (WHERE status = 'resolved')                       AS total_resolved,
+            AVG(EXTRACT(EPOCH FROM ("updatedAt" - "createdAt"))) FILTER (WHERE status = 'resolved') AS avg_resolution
+          FROM ticket
+          WHERE "workspaceId" = ${workspaceId}
+        )
+        SELECT
+          total_tickets       AS "totalTickets",
+          open_tickets        AS "openTickets",
+          resolved_by_ai      AS "resolvedByAI",
+          CASE
+            WHEN total_resolved > 0
+            THEN ROUND((resolved_by_ai::DOUBLE PRECISION / total_resolved * 100)::NUMERIC, 1)::DOUBLE PRECISION
+            ELSE 0
+          END                 AS "aiResolutionRate",
+          COALESCE(ROUND(avg_resolution::NUMERIC), 0)::DOUBLE PRECISION AS "avgResolutionTime"
+        FROM counts
+      `
+    : await prisma.$queryRaw<[TicketStatsRow]>`
+        WITH counts AS (
+          SELECT
+            COUNT(*) FILTER (WHERE status IN ('open', 'resolved', 'closed'))  AS total_tickets,
+            COUNT(*) FILTER (WHERE status = 'open')                           AS open_tickets,
+            COUNT(*) FILTER (WHERE status = 'resolved' AND "assignedToId" = ${AI_AGENT_ID}) AS resolved_by_ai,
+            COUNT(*) FILTER (WHERE status = 'resolved')                       AS total_resolved,
+            AVG(EXTRACT(EPOCH FROM ("updatedAt" - "createdAt"))) FILTER (WHERE status = 'resolved') AS avg_resolution
+          FROM ticket
+        )
+        SELECT
+          total_tickets       AS "totalTickets",
+          open_tickets        AS "openTickets",
+          resolved_by_ai      AS "resolvedByAI",
+          CASE
+            WHEN total_resolved > 0
+            THEN ROUND((resolved_by_ai::DOUBLE PRECISION / total_resolved * 100)::NUMERIC, 1)::DOUBLE PRECISION
+            ELSE 0
+          END                 AS "aiResolutionRate",
+          COALESCE(ROUND(avg_resolution::NUMERIC), 0)::DOUBLE PRECISION AS "avgResolutionTime"
+        FROM counts
+      `;
 
   const recentTickets = await prisma.ticket.findMany({
-    where: { status: { in: ["open", "resolved", "closed"] } },
+    where: {
+      ...(workspaceId ? { workspaceId } : {}),
+      status: { in: ["open", "resolved", "closed"] },
+    },
     select: {
       id: true,
       subject: true,
@@ -39,12 +131,11 @@ router.get("/stats", requireAuth, async (_req, res) => {
   const categoryBreakdown = await prisma.ticket.groupBy({
     by: ["category"],
     where: {
+      ...(workspaceId ? { workspaceId } : {}),
       status: { in: ["open", "resolved", "closed"] },
       category: { not: null },
     },
-    _count: {
-      id: true,
-    },
+    _count: { id: true },
   });
 
   const categories = categoryBreakdown.map((c) => ({
@@ -63,13 +154,17 @@ router.get("/stats", requireAuth, async (_req, res) => {
   });
 });
 
-router.get("/stats/daily-volume", requireAuth, async (_req, res) => {
+router.get("/stats/daily-volume", requireAuth, async (req, res) => {
+  const workspaceId = req.workspaceId ?? null;
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
   thirtyDaysAgo.setHours(0, 0, 0, 0);
 
   const tickets = await prisma.ticket.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } },
+    where: {
+      ...(workspaceId ? { workspaceId } : {}),
+      createdAt: { gte: thirtyDaysAgo },
+    },
     select: { createdAt: true },
   });
 
@@ -96,7 +191,7 @@ router.get("/", requireAuth, async (req, res) => {
   const query = validate(ticketListQuerySchema, req.query, res);
   if (!query) return;
 
-  const where: Prisma.TicketWhereInput = {};
+  const where: Prisma.TicketWhereInput = req.workspaceId ? { workspaceId: req.workspaceId } : {};
 
   if (query.status) {
     where.status = query.status;
@@ -146,7 +241,10 @@ router.get("/:id", requireAuth, async (req, res) => {
   }
 
   const ticket = await prisma.ticket.findUnique({
-    where: { id },
+    where: {
+      id,
+      ...(req.workspaceId ? { workspaceId: req.workspaceId } : {}),
+    },
     include: {
       assignedTo: { select: { id: true, name: true } },
     },
@@ -180,7 +278,12 @@ router.patch("/:id", requireAuth, async (req, res) => {
     }
   }
 
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  const ticket = await prisma.ticket.findUnique({
+    where: {
+      id,
+      ...(req.workspaceId ? { workspaceId: req.workspaceId } : {}),
+    },
+  });
   if (!ticket) {
     res.status(404).json({ error: "Ticket not found" });
     return;
