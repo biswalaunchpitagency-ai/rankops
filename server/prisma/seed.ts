@@ -75,6 +75,33 @@ async function main() {
     });
     console.log("AI agent user created successfully.");
   }
+
+  // Seed tools and resources for existing workspaces
+  const workspace = await prisma.workspace.findFirst();
+  if (workspace) {
+    const existingTools = await prisma.tool.findFirst({ where: { workspaceId: workspace.id } });
+    if (!existingTools) {
+      await prisma.tool.createMany({
+        data: [
+          { name: "Google Search Console", url: "https://search.google.com", purpose: "Rankings & Indexing", owner: "All", workspaceId: workspace.id },
+          { name: "GA4", url: "https://analytics.google.com", purpose: "Traffic Analytics", owner: "All", workspaceId: workspace.id },
+          { name: "Ahrefs", url: "https://ahrefs.com", purpose: "Keyword & competitor research", owner: "Strategists", workspaceId: workspace.id }
+        ]
+      });
+      console.log("Seeded tools for workspace:", workspace.name);
+    }
+
+    const existingResources = await prisma.resource.findFirst({ where: { workspaceId: workspace.id } });
+    if (!existingResources) {
+      await prisma.resource.createMany({
+        data: [
+          { name: "Agency report template", url: "#", note: "Duplicate per client, connect GA4", workspaceId: workspace.id },
+          { name: "Content brief template", url: "#", note: "Google Doc template", workspaceId: workspace.id }
+        ]
+      });
+      console.log("Seeded resources for workspace:", workspace.name);
+    }
+  }
 }
 
 main()

@@ -184,6 +184,8 @@ model Workspace {
   sops          SOP[]
   timeLogs      TimeLog[]
   knowledgeBase KnowledgeBase[]
+  tools         Tool[]
+  resources     Resource[]
 
   @@map("workspace")
 }
@@ -365,3 +367,31 @@ model KnowledgeBase {
 
   @@map("knowledge_base")
 }
+
+model Tool {
+  id          String    @id @default(uuid())
+  name        String
+  url         String
+  purpose     String
+  owner       String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("tools")
+}
+
+model Resource {
+  id          String    @id @default(uuid())
+  name        String
+  url         String    @default("#")
+  note        String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("resources")
+}
+
