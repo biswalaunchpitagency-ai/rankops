@@ -113,11 +113,50 @@ router.post("/:id/generate-pack", requireAuth, async (req, res) => {
     return;
   }
 
-  const PACK_TEMPLATES = [
-    { title: `Technical SEO Audit — ${client.name}`, phase: "Technical", estHours: 8 },
-    { title: `Content Brief + Article — ${client.name}`, phase: "Content", estHours: 6 },
-    { title: `Link Building Campaign — ${client.name}`, phase: "Link Building", estHours: 10 },
-    { title: `Monthly Performance Report — ${client.name}`, phase: "Reporting", estHours: 3 },
+  const TEMPLATES = [
+    {
+      title: `Technical SEO Audit — ${client.name}`,
+      phase: "Technical",
+      estHours: 8,
+      checklist: [
+        "Full crawl (Screaming Frog)",
+        "Index coverage & canonical review",
+        "Core Web Vitals check",
+        "Robots.txt & XML sitemap validation"
+      ]
+    },
+    {
+      title: `Content Brief + Article — ${client.name}`,
+      phase: "Content",
+      estHours: 6,
+      checklist: [
+        "Keyword cluster & intent confirmed",
+        "Content brief written",
+        "Draft written",
+        "SEO QA & publishes"
+      ]
+    },
+    {
+      title: `Link Building Campaign — ${client.name}`,
+      phase: "Link Building",
+      estHours: 10,
+      checklist: [
+        "Prospect list built (50+ targets)",
+        "Outreach templates personalized",
+        "Batch 1 outreach sent"
+      ]
+    },
+    {
+      title: `Monthly Performance Report — ${client.name}`,
+      phase: "Reporting",
+      estHours: 3,
+      checklist: [
+        "Pull GSC & GA4 data",
+        "Update ranking tracker",
+        "Summarize completed work",
+        "Send performance metrics"
+      ]
+    }
   ];
 
   const board = await prisma.board.findFirst({
@@ -131,7 +170,7 @@ router.post("/:id/generate-pack", requireAuth, async (req, res) => {
   const existingCount = await prisma.task.count({ where: { workspaceId } });
 
   const createdTasks = await Promise.all(
-    PACK_TEMPLATES.map(async (tpl, i) => {
+    TEMPLATES.map(async (tpl, i) => {
       const taskKey = `${taskKeyPrefix}-${existingCount + i + 1}`;
       return prisma.task.create({
         data: {
@@ -147,6 +186,7 @@ router.post("/:id/generate-pack", requireAuth, async (req, res) => {
           creatorId: req.user!.id,
           boardId: board?.id ?? null,
           boardColumnId: board?.columns[0]?.id ?? null,
+          checklist: tpl.checklist.map((text) => ({ text, done: false })),
         },
       });
     })

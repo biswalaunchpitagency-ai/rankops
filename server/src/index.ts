@@ -23,6 +23,8 @@ import clientsRouter from "./routes/clients";
 import sopsRouter from "./routes/sops";
 import timeLogsRouter from "./routes/timelogs";
 import kbRouter from "./routes/kb";
+import toolsRouter from "./routes/tools";
+import resourcesRouter from "./routes/resources";
 import { startQueue, stopQueue } from "./lib/queue";
 import { startGmailPolling, stopGmailPolling } from "./lib/poll-gmail";
 
@@ -88,6 +90,8 @@ app.use("/api/workspaces/:workspaceId/clients", requireAuth, requireWorkspaceMem
 app.use("/api/workspaces/:workspaceId/sops", requireAuth, requireWorkspaceMember, sopsRouter);
 app.use("/api/workspaces/:workspaceId/timelogs", requireAuth, requireWorkspaceMember, timeLogsRouter);
 app.use("/api/workspaces/:workspaceId/kb", requireAuth, requireWorkspaceMember, kbRouter);
+app.use("/api/workspaces/:workspaceId/tools", requireAuth, requireWorkspaceMember, toolsRouter);
+app.use("/api/workspaces/:workspaceId/resources", requireAuth, requireWorkspaceMember, resourcesRouter);
 
 Sentry.setupExpressErrorHandler(app);
 
