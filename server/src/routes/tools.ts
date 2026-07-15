@@ -29,7 +29,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
 
   await prisma.tool.deleteMany({
-    where: { id, workspaceId }
+    where: { id: id as string, workspaceId }
   });
   res.status(204).end();
 });

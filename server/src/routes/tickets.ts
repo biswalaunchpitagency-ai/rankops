@@ -29,12 +29,12 @@ router.post("/simulate-email", requireAuth, async (req, res) => {
   
   // Pick next email
   const index = Math.floor(Math.random() * SAMPLE_EMAILS.length);
-  const emailSample = SAMPLE_EMAILS[index];
+  const emailSample = (SAMPLE_EMAILS[index] || SAMPLE_EMAILS[0]) as { name: string; from: string; subject: string; body: string };
 
   // Map simulated email to a client in this workspace by domain
-  const domain = emailSample.from.split("@")[1];
+  const domain = emailSample.from.split("@")[1] || "";
   const client = await prisma.client.findFirst({
-    where: { workspaceId, name: { contains: domain.split(".")[0], mode: "insensitive" } }
+    where: { workspaceId, name: { contains: domain.split(".")[0] || "", mode: "insensitive" } }
   });
 
   // Assign category based on keywords
