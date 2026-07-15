@@ -2,7 +2,6 @@ import { useActiveWorkspace } from "../lib/workspace-context";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function TeamPage() {
   const { activeWorkspaceId } = useActiveWorkspace();
@@ -33,9 +32,9 @@ export default function TeamPage() {
           return (
             <Card key={m.id} className="shadow-none border-border">
               <CardHeader className="pb-3 flex flex-row items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold">{initials}</AvatarFallback>
-                </Avatar>
+                <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                  {initials}
+                </div>
                 <div>
                   <CardTitle className="text-sm font-semibold">{m.user.name}</CardTitle>
                   <p className="text-xs text-muted-foreground capitalize">{m.role}</p>
