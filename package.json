@@ -3,6 +3,10 @@
   "private": true,
   "workspaces": ["client", "server", "core"],
   "scripts": {
+    "dev": "concurrently --kill-others -n \"server,client\" -c \"blue.bold,magenta.bold\" \"bun --cwd server dev\" \"bun --cwd client dev\"",
+    "db:reset": "tsx server/prisma/reset-db.ts",
+    "db:push": "prisma db push --schema=server/prisma/schema.prisma --accept-data-loss",
+    "db:generate": "prisma generate --schema=server/prisma/schema.prisma",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
@@ -10,6 +14,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.3",
+    "concurrently": "^10.0.3",
     "dotenv": "^17.3.1"
   }
 }
