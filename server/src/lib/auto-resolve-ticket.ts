@@ -5,7 +5,7 @@ import { generateText } from "ai";
 import { aiModel } from "./ai";
 import Sentry from "./sentry";
 import prisma from "../db";
-import { sendEmailJob } from "./send-email";
+import { sendEmailJob, getClientUrl } from "./send-email";
 
 const QUEUE_NAME = "auto-resolve-ticket";
 
@@ -118,10 +118,14 @@ export async function registerAutoResolveWorker(boss: PgBoss): Promise<void> {
         ]);
 
         if (isAutomatic) {
+          const clientUrl = getClientUrl();
           await sendEmailJob({
             to: senderEmail,
             subject: `Re: ${subject}`,
-            body: response,
+            body:
+              response +
+              `\n\n---\n` +
+              `View ticket online: ${clientUrl}/tickets/${ticketId}`,
           });
         }
       } catch (error) {

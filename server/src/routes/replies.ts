@@ -8,7 +8,7 @@ import { generateText } from "ai";
 import { aiModel } from "../lib/ai";
 import { createReplySchema, polishReplySchema } from "core/schemas/replies.ts";
 import prisma from "../db";
-import { sendEmailJob } from "../lib/send-email";
+import { sendEmailJob, getClientUrl } from "../lib/send-email";
 
 const knowledgeBase = fs.readFileSync(
   path.join(import.meta.dirname, "../../knowledge-base.md"),
@@ -65,10 +65,14 @@ router.post("/", requireAuth, async (req, res) => {
     include: { user: { select: { id: true, name: true } } },
   });
 
+  const clientUrl = getClientUrl(req);
   await sendEmailJob({
     to: ticket.senderEmail,
     subject: `Re: ${ticket.subject}`,
-    body: data.body,
+    body:
+      data.body +
+      `\n\n---\n` +
+      `View ticket or reply online: ${clientUrl}/tickets/${ticket.id}`,
   });
 
   res.status(201).json(reply);
@@ -274,10 +278,14 @@ router.post("/:replyId/approve", requireAuth, async (req, res) => {
     data: { status: "resolved" },
   });
 
+  const clientUrl = getClientUrl(req);
   await sendEmailJob({
     to: ticket.senderEmail,
     subject: `Re: ${ticket.subject}`,
-    body: reply.body,
+    body:
+      reply.body +
+      `\n\n---\n` +
+      `View ticket or reply online: ${clientUrl}/tickets/${ticket.id}`,
   });
 
   res.json(updatedReply);
@@ -334,11 +342,15 @@ router.post("/:replyId/approve", requireAuth, async (req, res) => {
     data: { isDraft: false },
   });
 
+  const clientUrl = getClientUrl(req);
   // Send the outbound email
   await sendEmailJob({
     to: reply.ticket.senderEmail,
     subject: `Re: ${reply.ticket.subject}`,
-    body: reply.body,
+    body:
+      reply.body +
+      `\n\n---\n` +
+      `View ticket or reply online: ${clientUrl}/tickets/${reply.ticketId}`,
   });
 
   res.json(updated);

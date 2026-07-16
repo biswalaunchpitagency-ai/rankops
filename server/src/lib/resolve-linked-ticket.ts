@@ -1,6 +1,6 @@
 import type { PgBoss } from "pg-boss";
 import prisma from "../db";
-import { sendEmailJob } from "./send-email";
+import { sendEmailJob, getClientUrl } from "./send-email";
 import Sentry from "./sentry";
 
 const QUEUE_NAME = "resolve-linked-ticket";
@@ -48,6 +48,7 @@ export async function registerResolveLinkedTicketWorker(boss: PgBoss): Promise<v
       });
 
       // Send resolution email to customer
+      const clientUrl = getClientUrl();
       await sendEmailJob({
         to: ticket.senderEmail,
         subject: `Re: ${ticket.subject} [Resolved]`,
@@ -55,6 +56,8 @@ export async function registerResolveLinkedTicketWorker(boss: PgBoss): Promise<v
           `Hi ${ticket.senderName},\n\n` +
           `Great news! The engineering team has resolved your issue. ` +
           `The task "${taskTitle}" has been completed.\n\n` +
+          `You can view the ticket details and history here:\n` +
+          `${clientUrl}/tickets/${ticket.id}\n\n` +
           `If you have any further questions, feel free to reply.\n\n` +
           `— Launchpit Agency Team`,
       });
