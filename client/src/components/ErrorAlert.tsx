@@ -25,6 +25,8 @@ export default function ErrorAlert({
   fallback = "Something went wrong",
   className,
 }: ErrorAlertProps) {
+  if (!message && !error) return null;
+
   const text = message ?? getErrorMessage(error, fallback);
 
   return (
