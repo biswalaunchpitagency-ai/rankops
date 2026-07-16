@@ -112,3 +112,19 @@ export async function sendEmailJob(data: SendEmailJobData): Promise<void> {
   const { boss } = await import("./queue");
   await boss.send(QUEUE_NAME, data);
 }
+
+export function getClientUrl(req?: any): string {
+  if (req) {
+    const origin = req.headers.origin;
+    if (origin) return origin;
+    const referer = req.headers.referer;
+    if (referer) {
+      try {
+        return new URL(referer).origin;
+      } catch (e) {}
+    }
+  }
+  if (process.env.CLIENT_URL) return process.env.CLIENT_URL;
+  const origins = process.env.TRUSTED_ORIGINS?.split(",");
+  return origins?.[0] || "http://localhost:5173";
+}
