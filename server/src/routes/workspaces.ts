@@ -3,7 +3,7 @@ import { requireAuth } from "../middleware/require-auth";
 import { validate } from "../lib/validate";
 import { createWorkspaceSchema, inviteMemberSchema, updateWorkspaceSchema, updateMemberRoleSchema } from "core/schemas/tasks.ts";
 import prisma from "../db";
-import { sendEmailJob } from "../lib/send-email";
+import { sendEmailJob, getClientUrl } from "../lib/send-email";
 import { seedWorkspaceDefaults } from "../lib/workspace-defaults";
 
 const router = Router();
@@ -45,6 +45,7 @@ router.post("/", requireAuth, async (req, res) => {
     console.error("Failed to seed workspace defaults:", err);
   }
 
+  const clientUrl = getClientUrl(req);
   // Send welcome email (re-uses existing Nodemailer queue job)
   await sendEmailJob({
     to: req.user.email,
@@ -53,6 +54,8 @@ router.post("/", requireAuth, async (req, res) => {
       `Hi ${req.user.name},\n\n` +
       `Your workspace "${workspace.name}" has been created successfully.\n` +
       `Slug: ${workspace.slug}\n\n` +
+      `You can access and manage your workspace here:\n` +
+      `${clientUrl}/workspaces/${workspace.id}\n\n` +
       `You can now create boards, invite teammates, and start managing tasks.\n\n` +
       `— Launchpit Agency Team`,
   });
@@ -166,6 +169,7 @@ router.post("/invite", requireAuth, async (req, res) => {
     update: { role: data.role },
   });
 
+  const clientUrl = getClientUrl(req);
   // Notify invitee via email
   await sendEmailJob({
     to: invitee.email,
@@ -173,6 +177,8 @@ router.post("/invite", requireAuth, async (req, res) => {
     body:
       `Hi ${invitee.name},\n\n` +
       `${req.user.name} has added you to the workspace "${workspace.name}" as a ${data.role}.\n\n` +
+      `You can access the workspace here:\n` +
+      `${clientUrl}/workspaces/${workspace.id}\n\n` +
       `Log in to Launchpit Agency to get started.\n\n` +
       `— Launchpit Agency Team`,
   });
