@@ -82,7 +82,8 @@ router.post("/", requireAuth, async (req, res) => {
 
   // Notify assignee if set
   if (task.assigneeId && task.assignee?.email) {
-    const { sendEmailJob } = await import("../lib/send-email");
+    const { sendEmailJob, getClientUrl } = await import("../lib/send-email");
+    const clientUrl = getClientUrl(req);
     await sendEmailJob({
       to: task.assignee.email,
       subject: `[${taskKey}] Task assigned to you`,
@@ -90,7 +91,9 @@ router.post("/", requireAuth, async (req, res) => {
         `Hi ${task.assignee.name},\n\n` +
         `${req.user.name} assigned you a task:\n\n` +
         `${task.title}\n\n` +
-        `Priority: ${task.priority.replace("_", " ")}\n` +
+        `Priority: ${task.priority.replace("_", " ")}\n\n` +
+        `View Sprint Board and details here:\n` +
+        `${clientUrl}/boards/${task.boardId}\n\n` +
         `— Launchpit Agency Team`,
     });
   }
@@ -125,6 +128,9 @@ router.put("/:id", requireAuth, async (req, res) => {
       ...("priority" in data && { priority: data.priority }),
       ...("teamId" in data && { teamId: data.teamId }),
       ...("assigneeId" in data && { assigneeId: data.assigneeId }),
+      ...("checklist" in data && { checklist: data.checklist }),
+      ...("impact" in data && { impact: data.impact }),
+      ...("phase" in data && { phase: data.phase }),
     },
     include: {
       assignee: { select: { id: true, name: true, email: true } },
@@ -136,7 +142,8 @@ router.put("/:id", requireAuth, async (req, res) => {
   const assigneeChanged = "assigneeId" in data && data.assigneeId !== existing.assigneeId;
   const updatedAssignee = (updated as typeof updated & { assignee: { id: string; name: string; email: string } | null }).assignee;
   if (assigneeChanged && updatedAssignee?.email) {
-    const { sendEmailJob } = await import("../lib/send-email");
+    const { sendEmailJob, getClientUrl } = await import("../lib/send-email");
+    const clientUrl = getClientUrl(req);
     await sendEmailJob({
       to: updatedAssignee.email,
       subject: `[${updated.taskKey}] Task assigned to you`,
@@ -144,7 +151,9 @@ router.put("/:id", requireAuth, async (req, res) => {
         `Hi ${updatedAssignee.name},\n\n` +
         `${req.user.name} assigned you the task:\n\n` +
         `${updated.title}\n\n` +
-        `Priority: ${updated.priority.replace("_", " ")}\n` +
+        `Priority: ${updated.priority.replace("_", " ")}\n\n` +
+        `View Sprint Board and details here:\n` +
+        `${clientUrl}/boards/${updated.boardId}\n\n` +
         `— Launchpit Agency Team`,
     });
   }
