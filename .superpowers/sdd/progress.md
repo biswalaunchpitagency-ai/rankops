@@ -1,6 +1,7 @@
-# Gmail Filtering and Reply-To Configuration Progress Ledger
+# Gmail Sync and Idempotency Progress Ledger
 
-- [x] Task 1: Environment Variables Configuration (commits dbc0802, config only)
-- [x] Task 2: Configurable Gmail Search Query and Polling Interval (commits 90f741d, review clean)
-- [x] Task 3: Attach Reply-To Headers to Outgoing Emails (commits 6d2f65c, review clean)
-- [x] Task 4: Verification and Testing (verified locally, review clean)
+- [ ] Task 1: Prisma Schema Update and DB Synchronization
+- [ ] Task 2: Implement Idempotency Checking in Email Processing
+- [ ] Task 3: Backend In-Memory Sync Lock and pollGmailOnce Updates
+- [ ] Task 4: Add Express API Routes for Sync
+- [ ] Task 5: Frontend Integration & Visual Indicators
