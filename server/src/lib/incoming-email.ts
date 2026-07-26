@@ -9,6 +9,7 @@ export interface IncomingEmailData {
   subject: string;
   body: string;
   bodyHtml?: string;
+  gmailMessageId?: string;
 }
 
 export function stripSubjectPrefixes(subject: string): string {
@@ -24,9 +25,29 @@ export function parseFromField(from: string): { email: string; name: string } {
 }
 
 export async function processIncomingEmail(data: IncomingEmailData) {
+  // 1. Check for database idempotency using gmailMessageId
+  if (data.gmailMessageId) {
+    const existingTicket = await prisma.ticket.findUnique({
+      where: { gmailMessageId: data.gmailMessageId },
+    });
+    if (existingTicket) {
+      console.log(`[IncomingEmail] Ticket with gmailMessageId ${data.gmailMessageId} already exists. Skipping creation.`);
+      return { type: "ticket", ticket: existingTicket, skipped: true };
+    }
+
+    const existingReply = await prisma.reply.findUnique({
+      where: { gmailMessageId: data.gmailMessageId },
+    });
+    if (existingReply) {
+      console.log(`[IncomingEmail] Reply with gmailMessageId ${data.gmailMessageId} already exists. Skipping creation.`);
+      const ticket = await prisma.ticket.findUnique({ where: { id: existingReply.ticketId } });
+      return { type: "reply", ticket: ticket!, reply: existingReply, skipped: true };
+    }
+  }
+
   const normalizedSubject = stripSubjectPrefixes(data.subject);
 
-  // Check for existing open ticket from same sender with matching subject
+  // Check for existing open ticket from same sender with matching subject (threading replies)
   const existingTicket = await prisma.ticket.findFirst({
     where: {
       senderEmail: data.fromEmail,
@@ -43,10 +64,10 @@ export async function processIncomingEmail(data: IncomingEmailData) {
         senderType: "customer",
         ticketId: existingTicket.id,
         userId: null,
+        gmailMessageId: data.gmailMessageId ?? null,
       },
     });
 
-    // Enqueue auto-resolve job to handle customer follow-ups if needed
     sendAutoResolveJob(existingTicket).catch((error) =>
       console.error(`Failed to enqueue auto-resolve job for existing ticket ${existingTicket.id}:`, error)
     );
@@ -91,6 +112,7 @@ export async function processIncomingEmail(data: IncomingEmailData) {
       assignedToId: AI_AGENT_ID,
       workspaceId: targetWorkspaceId,
       clientId: matchedClient ? matchedClient.id : null,
+      gmailMessageId: data.gmailMessageId ?? null,
     },
   });
 
