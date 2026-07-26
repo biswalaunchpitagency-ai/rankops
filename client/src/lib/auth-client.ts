@@ -12,6 +12,23 @@ const getBaseURL = () => {
 
 export const { signIn, signOut, useSession } = createAuthClient({
   baseURL: getBaseURL(),
+  fetchOptions: {
+    auth: {
+      type: "Bearer",
+      token: () => {
+        return localStorage.getItem("better-auth.session_token") || undefined;
+      },
+    },
+    onSuccess(context: any) {
+      const data = context.data;
+      const urlStr = context.request?.url?.toString() || "";
+      if (urlStr.includes("/sign-out")) {
+        localStorage.removeItem("better-auth.session_token");
+      } else if (data?.token) {
+        localStorage.setItem("better-auth.session_token", data.token);
+      }
+    },
+  },
   plugins: [
     inferAdditionalFields({
       user: {

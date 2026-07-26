@@ -98,7 +98,8 @@ export async function processIncomingEmail(data: IncomingEmailData) {
     if (firstWorkspace) {
       targetWorkspaceId = firstWorkspace.id;
     } else {
-      throw new Error("No workspace found to assign incoming email ticket");
+      console.warn("No workspace found to assign incoming email ticket. Skipping.");
+      return;
     }
   }
 

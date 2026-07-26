@@ -20,6 +20,15 @@ const getAxiosBaseURL = () => {
 axios.defaults.baseURL = getAxiosBaseURL();
 axios.defaults.withCredentials = true;
 
+// Add interceptor to inject Bearer token into all Axios requests
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("better-auth.session_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
