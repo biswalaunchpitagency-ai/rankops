@@ -6,6 +6,7 @@ import { ticketListQuerySchema, updateTicketSchema } from "core/schemas/tickets.
 import prisma from "../db";
 import { Prisma } from "../generated/prisma/client";
 import { AI_AGENT_ID } from "core/constants/ai-agent.ts";
+import { syncState, pollGmailOnce } from "../lib/poll-gmail";
 
 interface TicketStatsRow {
   totalTickets: bigint;
@@ -233,6 +234,24 @@ router.get("/", requireAuth, async (req, res) => {
   res.json({ tickets, total, page: query.page, pageSize: query.pageSize });
 });
 
+router.get("/sync-status", requireAuth, async (req, res) => {
+  res.json(syncState);
+});
+
+router.post("/sync", requireAuth, async (req, res) => {
+  if (syncState.isSyncing) {
+    res.status(202).json({ message: "Sync already in progress", syncState });
+    return;
+  }
+
+  // Trigger sync in the background asynchronously
+  pollGmailOnce().catch((err) => {
+    console.error("[Sync Endpoint] Background sync execution failed:", err);
+  });
+
+  res.status(202).json({ message: "Sync initiated", syncState });
+});
+
 router.get("/:id", requireAuth, async (req, res) => {
   const id = parseId(req.params.id);
   if (!id) {
@@ -295,6 +314,8 @@ router.patch("/:id", requireAuth, async (req, res) => {
       ...("assignedToId" in data && { assignedToId: data.assignedToId }),
       ...("status" in data && { status: data.status }),
       ...("category" in data && { category: data.category }),
+      ...("impact" in data && { impact: data.impact }),
+      ...("checklist" in data && { checklist: data.checklist }),
     },
     include: { assignedTo: { select: { id: true, name: true } } },
   });
