@@ -28,6 +28,8 @@ const trustedOriginsChecker = (origin: string) => {
 export const auth = betterAuth({
   basePath: "/api/auth",
   trustedOrigins: (request) => {
+    // Better Auth may call this during initialization with no request object
+    if (!request || !request.headers) return false;
     const origin = request.headers.get("origin") || "";
     return trustedOriginsChecker(origin);
   },
