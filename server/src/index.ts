@@ -45,9 +45,21 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+const allowedOrigins = process.env.TRUSTED_ORIGINS?.split(",").map((o) => o.trim()) ?? [];
 app.use(
   cors({
-    origin: process.env.TRUSTED_ORIGINS?.split(",") ?? [],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. server-to-server, health checks)
+      if (!origin) return callback(null, true);
+      // Allow any Vercel preview URL or any explicitly configured origin
+      if (
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
   })
 );

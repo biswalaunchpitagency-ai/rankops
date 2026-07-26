@@ -1,9 +1,12 @@
 import * as Sentry from "@sentry/react";
 
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+
 Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
+  // Only pass dsn when it's a real value — passing an empty string triggers a warning
+  ...(sentryDsn ? { dsn: sentryDsn } : {}),
   environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || "development",
-  enabled: !!import.meta.env.VITE_SENTRY_DSN,
+  enabled: !!sentryDsn,
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
