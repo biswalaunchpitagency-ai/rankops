@@ -18,14 +18,12 @@ COPY --from=install /app/node_modules ./node_modules
 COPY . .
 
 RUN cd server && bunx prisma generate
-RUN cd client && bunx vite build
 
 # Stage 3: Production
 FROM oven/bun:1 AS production
 WORKDIR /app
 
 COPY --from=install /app/node_modules ./node_modules
-COPY --from=build /app/client/dist ./client/dist
 
 COPY server ./server
 COPY core ./core

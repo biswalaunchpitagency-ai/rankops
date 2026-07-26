@@ -99,16 +99,7 @@ app.use("/api/workspaces/:workspaceId/resources", requireAuth, requireWorkspaceM
 
 Sentry.setupExpressErrorHandler(app);
 
-// In production, serve the built React client as static files
-if (isProduction) {
-  const clientDist = path.resolve(import.meta.dirname, "../../client/dist");
-  app.use(express.static(clientDist));
-
-  // SPA fallback: serve index.html for any non-API route
-  app.get("/{*path}", (_req, res) => {
-    res.sendFile(path.join(clientDist, "index.html"));
-  });
-}
+// In production, the client is hosted separately on Vercel, so we do not serve static files from the backend.
 
 if (!process.env.WEBHOOK_SECRET) {
   console.warn("Warning: WEBHOOK_SECRET is not set. Webhook endpoints will return 500.");
