@@ -70,24 +70,28 @@ export async function registerSendEmailWorker(boss: PgBoss): Promise<void> {
 
       if (nodemailerTransporter) {
         const fromEmail = process.env.SMTP_USER!;
+        const replyTo = process.env.SMTP_REPLY_TO || fromEmail;
         await nodemailerTransporter.sendMail({
           from: fromEmail,
           to,
+          replyTo,
           subject,
           text: body,
           ...(bodyHtml && { html: bodyHtml }),
         });
-        console.log(`[Nodemailer] Email sent to ${to} — subject: "${subject}"`);
+        console.log(`[Nodemailer] Email sent to ${to} (Reply-To: ${replyTo}) — subject: "${subject}"`);
       } else if (process.env.SENDGRID_API_KEY) {
         sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        const replyTo = process.env.SENDGRID_REPLY_TO || process.env.SENDGRID_FROM_EMAIL!;
         await sgMail.send({
           to,
           from: process.env.SENDGRID_FROM_EMAIL!,
+          replyTo,
           subject,
           text: body,
           ...(bodyHtml && { html: bodyHtml }),
         });
-        console.log(`[SendGrid] Email sent to ${to} — subject: "${subject}"`);
+        console.log(`[SendGrid] Email sent to ${to} (Reply-To: ${replyTo}) — subject: "${subject}"`);
       } else {
         console.log(
           `\n========================================\n` +
