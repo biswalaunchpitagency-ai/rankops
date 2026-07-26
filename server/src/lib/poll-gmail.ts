@@ -38,6 +38,19 @@ interface GmailMessageDetail {
   };
 }
 
+export interface SyncState {
+  isSyncing: boolean;
+  lastSyncTime: string | null;
+  lastSyncStatus: "idle" | "success" | "error";
+  lastSyncError?: string;
+}
+
+export let syncState: SyncState = {
+  isSyncing: false,
+  lastSyncTime: null,
+  lastSyncStatus: "idle",
+};
+
 function getHeader(headers: GmailMessageHeader[], name: string): string {
   return headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
 }
@@ -106,6 +119,14 @@ async function getAccessToken(): Promise<string> {
 }
 
 export async function pollGmailOnce() {
+  if (syncState.isSyncing) {
+    console.log("[Gmail Poller] A sync is already in progress, skipping.");
+    return;
+  }
+
+  syncState.isSyncing = true;
+  syncState.lastSyncStatus = "idle";
+
   try {
     const accessToken = await getAccessToken();
 
@@ -124,80 +145,87 @@ export async function pollGmailOnce() {
     const listData = await listResponse.json() as { messages?: { id: string; threadId: string }[] };
     const messages = listData.messages || [];
 
-    if (messages.length === 0) {
-      return;
-    }
+    if (messages.length > 0) {
+      console.log(`[Gmail Poller] Found ${messages.length} unread message(s) to process.`);
 
-    console.log(`[Gmail Poller] Found ${messages.length} unread message(s) to process.`);
+      for (const msg of messages) {
+        try {
+          // Fetch message detail
+          const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
+          const detailResponse = await fetch(detailUrl, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
 
-    for (const msg of messages) {
-      try {
-        // Fetch message detail
-        const detailUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`;
-        const detailResponse = await fetch(detailUrl, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+          if (!detailResponse.ok) {
+            console.error(`[Gmail Poller] Failed to fetch message ${msg.id}: ${detailResponse.statusText}`);
+            continue;
+          }
 
-        if (!detailResponse.ok) {
-          console.error(`[Gmail Poller] Failed to fetch message ${msg.id}: ${detailResponse.statusText}`);
-          continue;
+          const msgDetail = await detailResponse.json() as GmailMessageDetail;
+          if (!msgDetail.payload) {
+            console.warn(`[Gmail Poller] Message ${msg.id} has no payload.`);
+            continue;
+          }
+
+          const headers = msgDetail.payload.headers || [];
+          const fromHeader = getHeader(headers, "from");
+          const subjectHeader = getHeader(headers, "subject") || "(No Subject)";
+          console.log(`[Gmail Poller] Found message ${msg.id} from ${fromHeader} with subject ${subjectHeader}`);
+          if (!fromHeader) {
+            console.warn(`[Gmail Poller] Message ${msg.id} has no From header.`);
+            continue;
+          }
+
+          const { email: fromEmail, name: fromName } = parseFromField(fromHeader);
+          const { text: bodyText, html: bodyHtml } = parseMessageBody(msgDetail.payload);
+
+          // Process message as ticket or reply
+          const result = await processIncomingEmail({
+            fromEmail,
+            fromName,
+            subject: subjectHeader,
+            body: bodyText || msgDetail.snippet || "",
+            bodyHtml: bodyHtml || undefined,
+            gmailMessageId: msg.id, // Passed to ensure database idempotency
+          });
+
+          console.log(`[Gmail Poller] Successfully processed message ${msg.id} as a new ${result.type}.`);
+
+          // Mark message as read (remove UNREAD label)
+          const modifyUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`;
+          const modifyResponse = await fetch(modifyUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              removeLabelIds: ["UNREAD"],
+            }),
+          });
+
+          if (!modifyResponse.ok) {
+            console.error(`[Gmail Poller] Failed to mark message ${msg.id} as read: ${modifyResponse.statusText}`);
+          } else {
+            console.log(`[Gmail Poller] Marked message ${msg.id} as read.`);
+          }
+        } catch (msgError) {
+          console.error(`[Gmail Poller] Error processing individual message ${msg.id}:`, msgError);
+          Sentry.captureException(msgError);
         }
-
-        const msgDetail = await detailResponse.json() as GmailMessageDetail;
-        if (!msgDetail.payload) {
-          console.warn(`[Gmail Poller] Message ${msg.id} has no payload.`);
-          continue;
-        }
-
-        const headers = msgDetail.payload.headers || [];
-        const fromHeader = getHeader(headers, "from");
-        const subjectHeader = getHeader(headers, "subject") || "(No Subject)";
-        console.log(`[Gmail Poller] Found message ${msg.id} from ${fromHeader} with subject ${subjectHeader}`);
-        if (!fromHeader) {
-          console.warn(`[Gmail Poller] Message ${msg.id} has no From header.`);
-          continue;
-        }
-
-        const { email: fromEmail, name: fromName } = parseFromField(fromHeader);
-        const { text: bodyText, html: bodyHtml } = parseMessageBody(msgDetail.payload);
-
-        // Process message as ticket or reply
-        const result = await processIncomingEmail({
-          fromEmail,
-          fromName,
-          subject: subjectHeader,
-          body: bodyText || msgDetail.snippet || "",
-          bodyHtml: bodyHtml || undefined,
-        });
-
-        console.log(`[Gmail Poller] Successfully processed message ${msg.id} as a new ${result.type}.`);
-
-        // Mark message as read (remove UNREAD label)
-        const modifyUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`;
-        const modifyResponse = await fetch(modifyUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            removeLabelIds: ["UNREAD"],
-          }),
-        });
-
-        if (!modifyResponse.ok) {
-          console.error(`[Gmail Poller] Failed to mark message ${msg.id} as read: ${modifyResponse.statusText}`);
-        } else {
-          console.log(`[Gmail Poller] Marked message ${msg.id} as read.`);
-        }
-      } catch (msgError) {
-        console.error(`[Gmail Poller] Error processing individual message ${msg.id}:`, msgError);
-        Sentry.captureException(msgError);
       }
     }
-  } catch (error) {
+
+    syncState.lastSyncTime = new Date().toISOString();
+    syncState.lastSyncStatus = "success";
+    syncState.lastSyncError = undefined;
+  } catch (error: any) {
     console.error("[Gmail Poller] Error in polling cycle:", error);
     Sentry.captureException(error);
+    syncState.lastSyncStatus = "error";
+    syncState.lastSyncError = error.message || String(error);
+  } finally {
+    syncState.isSyncing = false;
   }
 }
 
