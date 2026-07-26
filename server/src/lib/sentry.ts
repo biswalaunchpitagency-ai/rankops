@@ -1,5 +1,9 @@
 import dotenv from "dotenv";
-dotenv.config({ override: true });
+import path from "path";
+dotenv.config({
+  path: process.env.NODE_ENV === "test" ? path.resolve(process.cwd(), ".env.test") : undefined,
+  override: true
+});
 import * as Sentry from "@sentry/node";
 
 Sentry.init({

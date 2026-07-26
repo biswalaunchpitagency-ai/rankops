@@ -22,7 +22,6 @@ export default function ClientForm({ open, onOpenChange, defaultValues, mutation
     resolver: zodResolver(createClientSchema) as any,
     defaultValues: {
       retainerHours: 0,
-      rate: 0,
       status: "Active",
       emailDomains: [],
       ...defaultValues,
@@ -39,7 +38,6 @@ export default function ClientForm({ open, onOpenChange, defaultValues, mutation
       type: data.type || undefined,
       status: data.status,
       retainerHours: Number(data.retainerHours) || 0,
-      rate: Number(data.rate) || 0,
       notes: data.notes || undefined,
       emailDomains,
     });
@@ -71,15 +69,9 @@ export default function ClientForm({ open, onOpenChange, defaultValues, mutation
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Retainer Hours / Month</Label>
-              <Input type="number" min={0} step={0.5} {...register("retainerHours", { valueAsNumber: true })} className="rounded-sm bg-background border-border" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Hourly Rate ($)</Label>
-              <Input type="number" min={0} step={1} {...register("rate", { valueAsNumber: true })} className="rounded-sm bg-background border-border" />
-            </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Retainer Hours / Month</Label>
+            <Input type="number" min={0} step={0.5} {...register("retainerHours", { valueAsNumber: true })} className="rounded-sm bg-background border-border" />
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Email Domains (comma-separated)</Label>

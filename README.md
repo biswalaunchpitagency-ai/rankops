@@ -1,6 +1,6 @@
-# Helpdesk
+# Launchpit Agency
 
-> This project is built as part of my [Claude Code](https://codewithmosh.com/p/claude-code) course, showing how to build and ship a production-ready full-stack app with AI-assisted development.
+> This project is a production-ready full-stack app for Launchpit Agency, showing how to build and ship a support and task management platform.
 
 An AI-powered ticket management system that automatically classifies, responds to, and routes support tickets.
 

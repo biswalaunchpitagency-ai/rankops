@@ -94,33 +94,33 @@ export default function LibraryPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-4xl font-normal tracking-tight text-foreground">SOPs & Library</h1>
-        <p className="text-[13px] text-muted-foreground mt-1">Workspace templates, playbooks, tools, and resource references</p>
+    <div className="space-y-6 font-sans">
+      <div className="border-b border-border pb-4">
+        <h1 className="font-display text-4xl font-light tracking-tight text-foreground leading-none">SOPs & Library</h1>
+        <p className="text-[13px] text-muted-foreground mt-2">Workspace templates, playbooks, tools, and resource references</p>
       </div>
 
-      <div className="flex gap-2 border-b border-border">
+      <div className="flex gap-4 border-b border-border">
         <button
           onClick={() => setActiveTab("sops")}
-          className={`px-4 py-2 text-[13px] font-medium border-b-2 -mb-px transition-colors ${
-            activeTab === "sops" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
+          className={`pb-2.5 text-[11px] font-mono uppercase tracking-wider border-b-2 -mb-px transition-colors duration-200 cursor-pointer ${
+            activeTab === "sops" ? "border-primary text-foreground font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          SOPs & Knowledge Base
+          SOPs & KB
         </button>
         <button
           onClick={() => setActiveTab("tools")}
-          className={`px-4 py-2 text-[13px] font-medium border-b-2 -mb-px transition-colors ${
-            activeTab === "tools" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
+          className={`pb-2.5 text-[11px] font-mono uppercase tracking-wider border-b-2 -mb-px transition-colors duration-200 cursor-pointer ${
+            activeTab === "tools" ? "border-primary text-foreground font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Tool Stack
         </button>
         <button
           onClick={() => setActiveTab("resources")}
-          className={`px-4 py-2 text-[13px] font-medium border-b-2 -mb-px transition-colors ${
-            activeTab === "resources" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
+          className={`pb-2.5 text-[11px] font-mono uppercase tracking-wider border-b-2 -mb-px transition-colors duration-200 cursor-pointer ${
+            activeTab === "resources" ? "border-primary text-foreground font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Resources
@@ -130,41 +130,49 @@ export default function LibraryPage() {
       {activeTab === "sops" && <SopsTab workspaceId={activeWorkspaceId} />}
 
       {activeTab === "tools" && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in-page">
           <div className="flex justify-between items-center">
-            <h3 className="text-base font-semibold">Active Tool Stack</h3>
-            <Button size="sm" onClick={() => setShowAddTool(true)} className="gap-1.5">
-              <Plus size={14} /> Add Tool
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider font-mono">Active Tool Stack</h3>
+            <Button size="sm" onClick={() => setShowAddTool(true)} className="gap-1.5 rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs cursor-pointer">
+              <Plus size={13} /> Add Tool
             </Button>
           </div>
 
-          <div className="border border-border rounded-sm overflow-hidden bg-card">
-            <table className="min-w-full divide-y divide-border text-[13px]">
-              <thead className="bg-secondary/40 text-muted-foreground font-mono text-[11px] uppercase">
+          <div className="border border-border rounded-md overflow-hidden bg-card">
+            <table className="min-w-full divide-y divide-border text-xs">
+              <thead className="bg-muted/35 text-muted-foreground font-mono text-[10px] uppercase tracking-wider">
                 <tr>
-                  <th className="px-4 py-2.5 text-left">Tool Name</th>
-                  <th className="px-4 py-2.5 text-left">Purpose</th>
-                  <th className="px-4 py-2.5 text-left">Owner / Seat</th>
-                  <th className="px-4 py-2.5 text-right">Actions</th>
+                  <th className="px-5 py-3 text-left font-semibold">Tool Name</th>
+                  <th className="px-5 py-3 text-left font-semibold">Purpose</th>
+                  <th className="px-5 py-3 text-left font-semibold">Owner / Seat</th>
+                  <th className="px-5 py-3 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {tools.map((t) => (
-                  <tr key={t.id} className="hover:bg-secondary/10">
-                    <td className="px-4 py-3 font-medium text-foreground">
-                      <a href={t.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-                        {t.name} <ExternalLink size={12} />
-                      </a>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{t.purpose}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{t.owner}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => deleteToolMutation.mutate(t.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                        <Trash2 size={14} />
-                      </button>
+                {tools.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground">
+                      No tools added to this workspace yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  tools.map((t) => (
+                    <tr key={t.id} className="hover:bg-muted/10 transition-colors">
+                      <td className="px-5 py-3.5 font-medium text-foreground">
+                        <a href={t.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline font-semibold">
+                          {t.name} <ExternalLink size={11} className="opacity-70" />
+                        </a>
+                      </td>
+                      <td className="px-5 py-3.5 text-muted-foreground">{t.purpose}</td>
+                      <td className="px-5 py-3.5 text-muted-foreground font-mono text-[11px]">{t.owner}</td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button onClick={() => deleteToolMutation.mutate(t.id)} className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer">
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -172,49 +180,55 @@ export default function LibraryPage() {
       )}
 
       {activeTab === "resources" && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in-page">
           <div className="flex justify-between items-center">
-            <h3 className="text-base font-semibold">Workspace Resources</h3>
-            <Button size="sm" onClick={() => setShowAddResource(true)} className="gap-1.5">
-              <Plus size={14} /> Add Resource
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider font-mono">Workspace Resources</h3>
+            <Button size="sm" onClick={() => setShowAddResource(true)} className="gap-1.5 rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs cursor-pointer">
+              <Plus size={13} /> Add Resource
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {resources.map((r) => (
-              <div key={r.id} className="border border-border rounded-sm p-4 bg-card flex flex-col justify-between">
-                <div>
-                  <h4 className="font-semibold text-foreground text-sm">{r.name}</h4>
-                  <p className="text-xs text-muted-foreground mt-1">{r.note}</p>
-                </div>
-                <div className="flex justify-between items-center border-t border-border mt-3 pt-3">
-                  <a href={r.url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1">
-                    Open File <ExternalLink size={12} />
-                  </a>
-                  <button onClick={() => deleteResourceMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {resources.length === 0 ? (
+              <div className="md:col-span-2 border border-border border-dashed rounded-md py-16 text-center text-muted-foreground text-xs">
+                No resources registered for this workspace.
               </div>
-            ))}
+            ) : (
+              resources.map((r) => (
+                <div key={r.id} className="border border-border rounded-md p-6 bg-card flex flex-col justify-between hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-primary/20 transition-all duration-200">
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm leading-snug">{r.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-[65ch]">{r.note}</p>
+                  </div>
+                  <div className="flex justify-between items-center border-t border-border mt-4 pt-4">
+                    <a href={r.url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1.5">
+                      Open File <ExternalLink size={11} />
+                    </a>
+                    <button onClick={() => deleteResourceMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive cursor-pointer transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
       {/* Add Tool Dialog */}
       <Dialog open={showAddTool} onOpenChange={setShowAddTool}>
-        <DialogContent className="rounded-sm max-w-sm">
+        <DialogContent className="rounded-md max-w-sm border-border bg-popover shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
           <DialogHeader>
-            <DialogTitle>Add Tool</DialogTitle>
+            <DialogTitle className="text-sm font-semibold font-mono uppercase tracking-wider text-foreground">Add Tool</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <Input placeholder="Tool Name" value={toolName} onChange={(e) => setToolName(e.target.value)} />
-            <Input placeholder="URL" value={toolUrl} onChange={(e) => setToolUrl(e.target.value)} />
-            <Input placeholder="Purpose" value={toolPurpose} onChange={(e) => setToolPurpose(e.target.value)} />
-            <Input placeholder="Owner" value={toolOwner} onChange={(e) => setToolOwner(e.target.value)} />
+          <div className="space-y-3.5 pt-2">
+            <Input placeholder="Tool Name" value={toolName} onChange={(e) => setToolName(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
+            <Input placeholder="URL" value={toolUrl} onChange={(e) => setToolUrl(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
+            <Input placeholder="Purpose" value={toolPurpose} onChange={(e) => setToolPurpose(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
+            <Input placeholder="Owner / Audience" value={toolOwner} onChange={(e) => setToolOwner(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setShowAddTool(false)}>Cancel</Button>
-              <Button size="sm" onClick={() => addToolMutation.mutate({ name: toolName, url: toolUrl, purpose: toolPurpose, owner: toolOwner })}>Save</Button>
+              <Button variant="secondary" size="sm" onClick={() => setShowAddTool(false)} className="rounded-sm border border-border bg-muted hover:bg-muted/85 text-xs h-8 cursor-pointer">Cancel</Button>
+              <Button size="sm" onClick={() => addToolMutation.mutate({ name: toolName, url: toolUrl, purpose: toolPurpose, owner: toolOwner })} className="rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 cursor-pointer">Save Tool</Button>
             </div>
           </div>
         </DialogContent>
@@ -222,17 +236,17 @@ export default function LibraryPage() {
 
       {/* Add Resource Dialog */}
       <Dialog open={showAddResource} onOpenChange={setShowAddResource}>
-        <DialogContent className="rounded-sm max-w-sm">
+        <DialogContent className="rounded-md max-w-sm border-border bg-popover shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
           <DialogHeader>
-            <DialogTitle>Add Resource</DialogTitle>
+            <DialogTitle className="text-sm font-semibold font-mono uppercase tracking-wider text-foreground">Add Resource</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <Input placeholder="Resource Name" value={resName} onChange={(e) => setResName(e.target.value)} />
-            <Input placeholder="URL" value={resUrl} onChange={(e) => setResUrl(e.target.value)} />
-            <Input placeholder="Notes / Description" value={resNote} onChange={(e) => setResNote(e.target.value)} />
+          <div className="space-y-3.5 pt-2">
+            <Input placeholder="Resource Name" value={resName} onChange={(e) => setResName(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
+            <Input placeholder="URL" value={resUrl} onChange={(e) => setResUrl(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
+            <Input placeholder="Notes / Description" value={resNote} onChange={(e) => setResNote(e.target.value)} className="rounded-sm border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary" />
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setShowAddResource(false)}>Cancel</Button>
-              <Button size="sm" onClick={() => addResourceMutation.mutate({ name: resName, url: resUrl, note: resNote })}>Save</Button>
+              <Button variant="secondary" size="sm" onClick={() => setShowAddResource(false)} className="rounded-sm border border-border bg-muted hover:bg-muted/85 text-xs h-8 cursor-pointer">Cancel</Button>
+              <Button size="sm" onClick={() => addResourceMutation.mutate({ name: resName, url: resUrl, note: resNote })} className="rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 cursor-pointer">Save Resource</Button>
             </div>
           </div>
         </DialogContent>

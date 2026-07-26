@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { useSession } from "../lib/auth-client";
@@ -329,36 +329,41 @@ export default function WorkspaceDetailPage() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {pinnedBoards.map((board) => (
-                        <Card
+                        <Link
                           key={board.id}
-                          className="cursor-pointer border border-border rounded-sm hover:border-primary/40 hover:bg-secondary/20 transition-all duration-200 group shadow-none bg-card relative"
-                          onClick={() => navigate(`/boards/${board.id}`)}
+                          to={`/boards/${board.id}`}
+                          className="block no-underline text-card-foreground hover:no-underline"
                         >
-                          <CardHeader className="pb-2">
-                            <div className="flex items-start justify-between">
-                              <div className="h-8 w-8 rounded-sm bg-secondary flex items-center justify-center mb-3 border border-border">
-                                <Kanban className="h-4 w-4 text-muted-foreground" />
+                          <Card
+                            className="cursor-pointer border border-border rounded-sm hover:border-primary/40 hover:bg-secondary/20 transition-all duration-200 group shadow-none bg-card relative"
+                          >
+                            <CardHeader className="pb-2">
+                              <div className="flex items-start justify-between">
+                                <div className="h-8 w-8 rounded-sm bg-secondary flex items-center justify-center mb-3 border border-border">
+                                  <Kanban className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    title="Unpin board"
+                                    className="p-1 text-yellow-400 hover:text-muted-foreground transition-colors cursor-pointer"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      unpinBoardMutation.mutate(board.id);
+                                    }}
+                                  >
+                                    <Star className="h-4 w-4 fill-current" />
+                                  </button>
+                                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <button
-                                  title="Unpin board"
-                                  className="p-1 text-yellow-400 hover:text-muted-foreground transition-colors cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    unpinBoardMutation.mutate(board.id);
-                                  }}
-                                >
-                                  <Star className="h-4 w-4 fill-current" />
-                                </button>
-                                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
-                            </div>
-                            <CardTitle className="text-base font-semibold tracking-tight text-foreground">{board.name}</CardTitle>
-                            <CardDescription className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                              {board._count.tasks} tasks · {board._count.columns} columns
-                            </CardDescription>
-                          </CardHeader>
-                        </Card>
+                              <CardTitle className="text-base font-semibold tracking-tight text-foreground">{board.name}</CardTitle>
+                              <CardDescription className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                                {board._count.tasks} tasks · {board._count.columns} columns
+                              </CardDescription>
+                            </CardHeader>
+                          </Card>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -391,44 +396,49 @@ export default function WorkspaceDetailPage() {
                       {boards.map((board) => {
                         const isPinned = board.pinnedBy && board.pinnedBy.length > 0;
                         return (
-                          <Card
+                          <Link
                             key={board.id}
-                            className="cursor-pointer border border-border rounded-sm hover:border-primary/40 hover:bg-secondary/20 transition-all duration-200 group shadow-none bg-card"
-                            onClick={() => navigate(`/boards/${board.id}`)}
+                            to={`/boards/${board.id}`}
+                            className="block no-underline text-card-foreground hover:no-underline"
                           >
-                            <CardHeader className="pb-2">
-                              <div className="flex items-start justify-between">
-                                <div className="h-8 w-8 rounded-sm bg-secondary flex items-center justify-center mb-3 border border-border">
-                                  <Kanban className="h-4 w-4 text-muted-foreground" />
+                            <Card
+                              className="cursor-pointer border border-border rounded-sm hover:border-primary/40 hover:bg-secondary/20 transition-all duration-200 group shadow-none bg-card"
+                            >
+                              <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between">
+                                  <div className="h-8 w-8 rounded-sm bg-secondary flex items-center justify-center mb-3 border border-border">
+                                    <Kanban className="h-4 w-4 text-muted-foreground" />
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      title={isPinned ? "Unpin board" : "Pin board"}
+                                      className={`p-1 transition-colors cursor-pointer ${
+                                        isPinned
+                                          ? "text-yellow-400 hover:text-muted-foreground"
+                                          : "text-muted-foreground/40 hover:text-yellow-400"
+                                      }`}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (isPinned) {
+                                          unpinBoardMutation.mutate(board.id);
+                                        } else {
+                                          pinBoardMutation.mutate(board.id);
+                                        }
+                                      }}
+                                    >
+                                      <Star className={`h-4 w-4 ${isPinned ? "fill-current" : ""}`} />
+                                    </button>
+                                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    title={isPinned ? "Unpin board" : "Pin board"}
-                                    className={`p-1 transition-colors cursor-pointer ${
-                                      isPinned
-                                        ? "text-yellow-400 hover:text-muted-foreground"
-                                        : "text-muted-foreground/40 hover:text-yellow-400"
-                                    }`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (isPinned) {
-                                        unpinBoardMutation.mutate(board.id);
-                                      } else {
-                                        pinBoardMutation.mutate(board.id);
-                                      }
-                                    }}
-                                  >
-                                    <Star className={`h-4 w-4 ${isPinned ? "fill-current" : ""}`} />
-                                  </button>
-                                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                              </div>
-                              <CardTitle className="text-base font-semibold tracking-tight text-foreground">{board.name}</CardTitle>
-                              <CardDescription className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                                {board._count.tasks} tasks · {board._count.columns} columns
-                              </CardDescription>
-                            </CardHeader>
-                          </Card>
+                                <CardTitle className="text-base font-semibold tracking-tight text-foreground">{board.name}</CardTitle>
+                                <CardDescription className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                                  {board._count.tasks} tasks · {board._count.columns} columns
+                                </CardDescription>
+                              </CardHeader>
+                            </Card>
+                          </Link>
                         );
                       })}
                     </div>

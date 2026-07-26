@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useParams } from "react-router";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActiveWorkspace } from "../lib/workspace-context";
 import axios from "axios";
 import {
   DragDropContext,
@@ -34,7 +35,7 @@ import ErrorAlert from "@/components/ErrorAlert";
 import ErrorMessage from "@/components/ErrorMessage";
 import BackLink from "@/components/BackLink";
 import StatusBadge from "@/components/StatusBadge";
-import { PlusCircle, Ticket, Link2, MoreHorizontal, Trash2, Plus } from "lucide-react";
+import { PlusCircle, Ticket, Link2, MoreHorizontal, Trash2, Plus, Kanban } from "lucide-react";
 import TimeLogWidget from "@/components/TimeLogWidget";
 import ChecklistWidget from "@/components/ChecklistWidget";
 import ImpactNoteModal from "@/components/ImpactNoteModal";
@@ -114,29 +115,29 @@ function TaskCard({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`select-none rounded-sm border border-border bg-card p-3 shadow-none transition-all duration-150 cursor-pointer hover:border-primary/40 hover:bg-secondary/10 ${
-            snapshot.isDragging ? "shadow-md border-primary/60 rotate-1 scale-[1.01] bg-card" : ""
+          className={`select-none rounded-md border border-border bg-card p-4 shadow-none transition-all duration-200 cursor-pointer hover:border-primary/30 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${
+            snapshot.isDragging ? "shadow-[0_4px_16px_rgba(0,0,0,0.08)] border-primary/50 rotate-1 scale-[1.01] bg-card" : ""
           }`}
           onClick={onClick}
         >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase">{task.taskKey}</span>
+          <div className="flex items-start justify-between gap-2 mb-2.5">
+            <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">{task.taskKey}</span>
             <PriorityBadge priority={task.priority} />
           </div>
-          <p className="text-[13px] font-medium leading-snug mb-2 line-clamp-2 text-foreground">{task.title}</p>
+          <p className="text-xs font-semibold leading-snug mb-3 line-clamp-2 text-foreground/90">{task.title}</p>
           <div className="flex items-center gap-2 flex-wrap">
             {task.assignee && (
               <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span className="h-4.5 w-4.5 rounded-sm bg-secondary flex items-center justify-center text-[9px] font-bold text-foreground border border-border">
-                  {task.assignee.name[0]}
+                <span className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-mono font-semibold text-muted-foreground border border-border">
+                  {task.assignee.name[0].toUpperCase()}
                 </span>
-                <span className="font-medium text-foreground">{task.assignee.name}</span>
+                <span className="text-xs text-muted-foreground">{task.assignee.name}</span>
               </span>
             )}
             {task.linkedTicket && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground border border-border rounded-sm px-1.5 py-0.5 bg-secondary/30">
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground border border-border rounded-sm px-2 py-0.5 bg-muted/40 font-mono">
                 <Ticket className="h-3 w-3 text-muted-foreground" />
-                <span className="font-mono">#{task.linkedTicket.id}</span>
+                <span>#{task.linkedTicket.id}</span>
               </span>
             )}
           </div>
@@ -150,6 +151,8 @@ function TaskCard({
 
 export default function KanbanBoardPage() {
   const { id: boardId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { activeWorkspaceId } = useActiveWorkspace();
   const queryClient = useQueryClient();
 
   const [createInColumnId, setCreateInColumnId] = useState<string | null>(null);
@@ -164,6 +167,21 @@ export default function KanbanBoardPage() {
   const [deleteActionType, setDeleteActionType] = useState<"move" | "delete">("move");
   const [targetColumnIdForMove, setTargetColumnIdForMove] = useState("");
   const [menuOpenColumnId, setMenuOpenColumnId] = useState<string | null>(null);
+
+  const { data: boards = [], isLoading: boardsLoading } = useQuery<Board[]>({
+    queryKey: ["boards", activeWorkspaceId],
+    queryFn: async () => {
+      const { data } = await axios.get<Board[]>(`/api/boards?workspaceId=${activeWorkspaceId}`);
+      return data;
+    },
+    enabled: !boardId && !!activeWorkspaceId,
+  });
+
+  useEffect(() => {
+    if (!boardId && boards.length > 0) {
+      navigate(`/boards/${boards[0].id}`, { replace: true });
+    }
+  }, [boardId, boards, navigate]);
 
   const { data: board, isLoading } = useQuery<Board>({
     queryKey: ["board", boardId],
@@ -388,6 +406,42 @@ export default function KanbanBoardPage() {
     });
   };
 
+  if (!activeWorkspaceId) {
+    return (
+      <div className="text-muted-foreground text-[13px] p-6">
+        Select a workspace to view the Sprint Board.
+      </div>
+    );
+  }
+
+  if (!boardId) {
+    if (boardsLoading) {
+      return (
+        <div className="flex gap-4 overflow-x-auto pb-4 p-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="w-72 shrink-0 h-96 rounded-sm bg-muted animate-pulse border border-border" />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-border rounded-sm bg-secondary/15 m-6">
+        <Kanban className="h-10 w-10 text-muted-foreground mb-4" />
+        <h2 className="font-display text-2xl font-normal tracking-tight text-foreground mb-1">No Sprint Boards</h2>
+        <p className="text-muted-foreground text-xs mb-6 max-w-sm">
+          There are no boards in this workspace yet. Create a board from the Workspace detail page.
+        </p>
+        <Button
+          onClick={() => navigate(`/workspaces/${activeWorkspaceId}`)}
+          className="gap-2 rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-[13px] font-medium px-4 py-2 cursor-pointer shadow-none"
+        >
+          Go to Workspace Details
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 h-full font-sans animate-in-page">
       <BackLink to={board ? `/workspaces/${board.workspaceId}` : "/workspaces"}>
@@ -404,8 +458,11 @@ export default function KanbanBoardPage() {
 
       {board && !isLoading && (
         <>
-          <div className="flex items-center justify-between">
-            <h1 className="font-display text-4xl font-normal tracking-tight text-foreground">{board.name}</h1>
+          <div className="flex justify-between items-end border-b border-border pb-4">
+            <div>
+              <h1 className="font-display text-4xl font-light tracking-tight text-foreground leading-none">{board.name}</h1>
+              <p className="text-[13px] text-muted-foreground mt-2">Manage workspace sprint cycles, active task flows, and completion impact logs</p>
+            </div>
           </div>
 
           <DragDropContext onDragEnd={onDragEnd}>
@@ -414,7 +471,7 @@ export default function KanbanBoardPage() {
                 <div
                   ref={providedDroppable.innerRef}
                   {...providedDroppable.droppableProps}
-                  className="flex gap-4 overflow-x-auto pb-8 items-start"
+                  className="flex gap-6 overflow-x-auto pb-8 items-start pt-2"
                 >
                   {board.columns.map((column, index) => (
                     <Draggable draggableId={column.id} index={index} key={column.id}>
@@ -422,24 +479,25 @@ export default function KanbanBoardPage() {
                         <div
                           ref={providedDraggable.innerRef}
                           {...providedDraggable.draggableProps}
-                          className={`w-72 shrink-0 rounded-sm bg-secondary/40 border border-border flex flex-col ${
-                            snapshotDraggable.isDragging ? "shadow-md border-primary/40 bg-secondary/50" : ""
+                          data-column-name={column.name}
+                          className={`w-72 shrink-0 rounded-md bg-muted/40 border border-border flex flex-col transition-all duration-150 ${
+                            snapshotDraggable.isDragging ? "shadow-[0_4px_16px_rgba(0,0,0,0.08)] border-primary/40 bg-muted/60" : ""
                           }`}
                         >
                           {/* Column header */}
                           <div
                             {...providedDraggable.dragHandleProps}
-                            className="flex items-center justify-between px-3 py-2.5 border-b border-border/60 bg-secondary/35 cursor-grab active:cursor-grabbing select-none"
+                            className="flex items-center justify-between px-4 py-3 border-b border-border/80 bg-muted/20 rounded-t-md cursor-grab active:cursor-grabbing select-none"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-[13px] font-semibold text-foreground">{column.name}</span>
-                              <span className="rounded-sm bg-background border border-border px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                              <span className="text-xs uppercase font-mono tracking-wider font-semibold text-foreground">{column.name}</span>
+                              <span className="rounded-sm bg-card border border-border px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground">
                                 {column.tasks.length}
                               </span>
                             </div>
                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                               <button
-                                className="rounded-sm p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                                className="rounded-sm p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                                 onClick={() => openCreateInColumn(column.id)}
                                 title="Add task"
                               >
@@ -449,7 +507,7 @@ export default function KanbanBoardPage() {
                               {/* Column Action Menu */}
                               <div className="relative">
                                 <button
-                                  className="rounded-sm p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                                  className="rounded-sm p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setMenuOpenColumnId(menuOpenColumnId === column.id ? null : column.id);
@@ -467,14 +525,14 @@ export default function KanbanBoardPage() {
                                         setMenuOpenColumnId(null);
                                       }}
                                     />
-                                    <div className="absolute right-0 mt-1 w-40 rounded-sm border border-border bg-popover text-popover-foreground p-1 shadow-md z-20 font-sans text-xs">
+                                    <div className="absolute right-0 mt-1.5 w-40 rounded-md border border-border bg-popover text-popover-foreground p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-20 font-sans text-xs">
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setMenuOpenColumnId(null);
                                           openCreateInColumn(column.id);
                                         }}
-                                        className="w-full text-left px-2 py-1.5 hover:bg-secondary rounded-sm transition-colors cursor-pointer flex items-center gap-1.5"
+                                        className="w-full text-left px-2 py-1.5 hover:bg-muted rounded-sm transition-colors cursor-pointer flex items-center gap-1.5"
                                       >
                                         <Plus className="h-3.5 w-3.5" />
                                         Add Task
@@ -505,8 +563,8 @@ export default function KanbanBoardPage() {
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={`flex-1 flex flex-col gap-2 p-2 min-h-[150px] transition-colors rounded-b-sm ${
-                                  snapshot.isDraggingOver ? "bg-secondary/60" : ""
+                                className={`flex-1 flex flex-col gap-3 p-3 min-h-[180px] transition-colors rounded-b-md ${
+                                  snapshot.isDraggingOver ? "bg-muted/70" : ""
                                 }`}
                               >
                                 {column.tasks.map((task, index) => (
@@ -528,7 +586,7 @@ export default function KanbanBoardPage() {
                   {providedDroppable.placeholder}
 
                   {/* Add Column Card */}
-                  <div className="w-72 shrink-0 rounded-sm border border-dashed border-border p-3 hover:bg-secondary/15 transition-all">
+                  <div className="w-72 shrink-0 rounded-md border border-dashed border-border p-4 bg-muted/10 hover:bg-muted/20 transition-all duration-200">
                     {isAddColumnOpen ? (
                       <form
                         onSubmit={(e) => {
@@ -543,23 +601,23 @@ export default function KanbanBoardPage() {
                           placeholder="Column name..."
                           value={newColumnName}
                           onChange={(e) => setNewColumnName(e.target.value)}
-                          className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-8.5"
+                          className="rounded-sm border border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-none"
                           autoFocus
                         />
                         <div className="flex items-center gap-2">
                           <Button
                             type="submit"
                             size="sm"
-                            className="rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-xs h-7.5 px-3 shadow-none border-0"
+                            className="rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-3.5 shadow-none border-0 cursor-pointer"
                             disabled={addColumnMutation.isPending}
                           >
                             {addColumnMutation.isPending ? "Adding..." : "Add"}
                           </Button>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
-                            className="rounded-sm border border-border bg-background hover:bg-secondary text-foreground text-xs h-7.5 px-3 shadow-none"
+                            className="rounded-sm border border-border bg-muted hover:bg-muted/80 text-foreground text-xs h-8 px-3.5 shadow-none cursor-pointer"
                             onClick={() => setIsAddColumnOpen(false)}
                           >
                             Cancel
@@ -588,12 +646,12 @@ export default function KanbanBoardPage() {
 
       {/* Create task dialog */}
       <Dialog open={!!createInColumnId} onOpenChange={(open) => !open && setCreateInColumnId(null)}>
-        <DialogContent className="rounded-sm border border-border shadow-lg bg-background font-sans max-w-md">
+        <DialogContent className="rounded-md border border-border shadow-[0_4px_16px_rgba(0,0,0,0.08)] bg-popover font-sans max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display text-2xl font-normal tracking-tight text-foreground">
+            <DialogTitle className="font-mono text-sm font-semibold uppercase tracking-wider text-foreground">
               Create Task
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
+            <DialogDescription className="text-xs text-muted-foreground mt-1.5">
               Add a new task to{" "}
               <strong className="text-foreground">
                 {board?.columns.find((c) => c.id === createInColumnId)?.name ?? "column"}
@@ -609,7 +667,7 @@ export default function KanbanBoardPage() {
               <Input
                 id="task-title"
                 placeholder="Task title"
-                className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px]"
+                className="rounded-sm border border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-none"
                 {...createForm.register("title")}
               />
               {createForm.formState.errors.title && (
@@ -622,7 +680,7 @@ export default function KanbanBoardPage() {
                 id="task-desc"
                 placeholder="Add details for the task..."
                 rows={3}
-                className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] resize-none"
+                className="rounded-sm border border-border bg-card text-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-none resize-none"
                 {...createForm.register("description")}
               />
             </div>
@@ -632,12 +690,12 @@ export default function KanbanBoardPage() {
                 defaultValue="no_priority"
                 onValueChange={(v) => createForm.setValue("priority", v as any)}
               >
-                <SelectTrigger id="task-priority" className="rounded-sm border-border focus:ring-primary shadow-none text-[13px] h-9">
+                <SelectTrigger id="task-priority" className="rounded-sm border-border bg-card focus:ring-1 focus:ring-primary focus:border-primary shadow-none text-xs h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-sm">
                   {taskPriorities.map((p) => (
-                    <SelectItem key={p} value={p} className="rounded-sm text-[13px]">
+                    <SelectItem key={p} value={p} className="rounded-sm text-xs">
                       {priorityConfig[p].label}
                     </SelectItem>
                   ))}
@@ -647,11 +705,11 @@ export default function KanbanBoardPage() {
             {createMutation.error && (
               <ErrorAlert error={createMutation.error} fallback="Failed to create task" />
             )}
-            <div className="flex gap-2 justify-end pt-2">
+            <div className="flex gap-2 justify-end pt-2 border-t border-border mt-5">
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-sm border border-border bg-background hover:bg-secondary text-foreground text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                className="rounded-sm border border-border bg-muted hover:bg-muted/80 text-foreground text-xs h-8 px-4 shadow-none transition-all cursor-pointer"
                 onClick={() => setCreateInColumnId(null)}
               >
                 Cancel
@@ -659,7 +717,7 @@ export default function KanbanBoardPage() {
               <Button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                className="rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-8 px-4 shadow-none transition-all cursor-pointer"
               >
                 {createMutation.isPending ? "Creating..." : "Create Task"}
               </Button>
@@ -670,18 +728,18 @@ export default function KanbanBoardPage() {
 
       {/* Task detail dialog */}
       <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
-        <DialogContent className="sm:max-w-lg rounded-sm border border-border shadow-lg bg-background font-sans">
+        <DialogContent className="sm:max-w-lg rounded-md border border-border shadow-[0_4px_16px_rgba(0,0,0,0.08)] bg-popover font-sans">
           <DialogHeader>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-mono text-muted-foreground uppercase">{selectedTask?.taskKey}</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">{selectedTask?.taskKey}</span>
               {selectedTask?.linkedTicket && (
-                <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-secondary/50 px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground uppercase tracking-wider">
                   <Link2 className="h-3 w-3" />
                   <span>Ticket #{selectedTask.linkedTicket.id}</span>
                 </span>
               )}
             </div>
-            <DialogTitle className="font-display text-2xl font-normal tracking-tight text-foreground">
+            <DialogTitle className="font-display text-2xl font-light tracking-tight text-foreground leading-snug">
               {selectedTask?.title}
             </DialogTitle>
           </DialogHeader>
@@ -697,7 +755,7 @@ export default function KanbanBoardPage() {
                 <Label htmlFor="ut-title" className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Title</Label>
                 <Input
                   id="ut-title"
-                  className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px]"
+                  className="rounded-sm border border-border bg-card text-xs h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-none"
                   {...updateForm.register("title")}
                 />
               </div>
@@ -706,7 +764,7 @@ export default function KanbanBoardPage() {
                 <Textarea
                   id="ut-desc"
                   rows={4}
-                  className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] resize-none"
+                  className="rounded-sm border border-border bg-card text-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-none resize-none"
                   {...updateForm.register("description")}
                 />
               </div>
@@ -716,12 +774,12 @@ export default function KanbanBoardPage() {
                   defaultValue={selectedTask.priority}
                   onValueChange={(v) => updateForm.setValue("priority", v as any)}
                 >
-                  <SelectTrigger id="ut-priority" className="rounded-sm border-border focus:ring-primary shadow-none text-[13px] h-9">
+                  <SelectTrigger id="ut-priority" className="rounded-sm border-border bg-card focus:ring-1 focus:ring-primary focus:border-primary shadow-none text-xs h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-sm">
                     {taskPriorities.map((p) => (
-                      <SelectItem key={p} value={p} className="rounded-sm text-[13px]">
+                      <SelectItem key={p} value={p} className="rounded-sm text-xs">
                         {priorityConfig[p].label}
                       </SelectItem>
                     ))}
@@ -730,7 +788,7 @@ export default function KanbanBoardPage() {
               </div>
 
               {selectedTask.linkedTicket && (
-                <Card className="border border-border border-dashed rounded-sm bg-secondary/20 shadow-none">
+                <Card className="border border-border border-dashed rounded-md bg-muted/20 shadow-none">
                   <CardContent className="p-3.5">
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <Ticket className="h-3.5 w-3.5 text-muted-foreground" />
@@ -765,8 +823,8 @@ export default function KanbanBoardPage() {
               {/* Impact Note (if set) */}
               {selectedTask.impact && (
                 <div className="border-t border-border pt-4">
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Impact</p>
-                  <p className="text-[12px] text-foreground font-sans">{selectedTask.impact}</p>
+                  <p className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Impact</p>
+                  <p className="text-xs text-foreground font-sans bg-muted/25 p-3 rounded-sm border border-border">{selectedTask.impact}</p>
                 </div>
               )}
 
@@ -779,7 +837,7 @@ export default function KanbanBoardPage() {
                   type="button"
                   variant="destructive"
                   disabled={deleteMutation.isPending}
-                  className="rounded-sm bg-[#9f2f2d] hover:bg-[#b03a37] text-white text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2 mr-auto"
+                  className="rounded-sm bg-[#9f2f2d] hover:bg-[#b03a37] text-white text-xs h-8 px-3.5 shadow-none transition-all cursor-pointer mr-auto"
                   onClick={() => deleteMutation.mutate(selectedTask.id)}
                 >
                   {deleteMutation.isPending ? "Deleting..." : "Delete Task"}
@@ -787,7 +845,7 @@ export default function KanbanBoardPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-sm border border-border bg-background hover:bg-secondary text-foreground text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                  className="rounded-sm border border-border bg-muted hover:bg-muted/80 text-foreground text-xs h-8 px-3.5 shadow-none transition-all cursor-pointer"
                   onClick={() => setSelectedTask(null)}
                 >
                   Cancel
@@ -795,7 +853,7 @@ export default function KanbanBoardPage() {
                 <Button
                   type="submit"
                   disabled={updateMutation.isPending}
-                  className="rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                  className="rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-8 px-4 shadow-none transition-all cursor-pointer"
                 >
                   {updateMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
@@ -807,12 +865,12 @@ export default function KanbanBoardPage() {
 
       {/* Delete column dialog */}
       <Dialog open={!!columnToDelete} onOpenChange={(open) => !open && setColumnToDelete(null)}>
-        <DialogContent className="rounded-sm border border-border shadow-lg bg-background font-sans max-w-md">
+        <DialogContent className="rounded-md border border-border shadow-[0_4px_16px_rgba(0,0,0,0.08)] bg-popover font-sans max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display text-2xl font-normal tracking-tight text-foreground">
+            <DialogTitle className="font-mono text-sm font-semibold uppercase tracking-wider text-foreground">
               Delete Column: {columnToDelete?.name}
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
+            <DialogDescription className="text-xs text-muted-foreground mt-1.5">
               This action cannot be undone. Please specify what to do with the cards inside this column.
             </DialogDescription>
           </DialogHeader>
@@ -828,17 +886,17 @@ export default function KanbanBoardPage() {
                   <div className="space-y-2">
                     <Label className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Safeguard Action</Label>
                     <div className="space-y-2.5">
-                      <label className="flex items-start gap-2.5 cursor-pointer text-[13px] text-foreground">
+                      <label className="flex items-start gap-2.5 cursor-pointer text-xs text-foreground">
                         <input
                           type="radio"
                           name="delete-action"
-                          className="mt-0.5"
+                          className="mt-0.5 focus:ring-primary text-primary"
                           checked={deleteActionType === "move"}
                           onChange={() => setDeleteActionType("move")}
                         />
                         <div>
-                          <span className="font-medium">Move tasks to another column</span>
-                          <p className="text-xs text-muted-foreground">Select a target column to preserve these tasks.</p>
+                          <span className="font-semibold text-foreground">Move tasks to another column</span>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Select a target column to preserve these tasks.</p>
                         </div>
                       </label>
 
@@ -847,14 +905,14 @@ export default function KanbanBoardPage() {
                           value={targetColumnIdForMove}
                           onValueChange={setTargetColumnIdForMove}
                         >
-                          <SelectTrigger className="rounded-sm border-border focus:ring-primary shadow-none text-[13px] h-9 ml-6 w-[calc(100%-24px)]">
+                          <SelectTrigger className="rounded-sm border-border bg-card focus:ring-1 focus:ring-primary focus:border-primary shadow-none text-xs h-9 ml-6 w-[calc(100%-24px)]">
                             <SelectValue placeholder="Select column..." />
                           </SelectTrigger>
                           <SelectContent className="rounded-sm">
                             {board?.columns
                               .filter((c) => c.id !== columnToDelete.id)
                               .map((c) => (
-                                <SelectItem key={c.id} value={c.id} className="rounded-sm text-[13px]">
+                                <SelectItem key={c.id} value={c.id} className="rounded-sm text-xs">
                                   {c.name}
                                 </SelectItem>
                               ))}
@@ -862,24 +920,24 @@ export default function KanbanBoardPage() {
                         </Select>
                       )}
 
-                      <label className="flex items-start gap-2.5 cursor-pointer text-[13px] text-foreground">
+                      <label className="flex items-start gap-2.5 cursor-pointer text-xs text-foreground">
                         <input
                           type="radio"
                           name="delete-action"
-                          className="mt-0.5"
+                          className="mt-0.5 focus:ring-primary text-primary"
                           checked={deleteActionType === "delete"}
                           onChange={() => setDeleteActionType("delete")}
                         />
                         <div>
-                          <span className="font-medium text-destructive">Delete all tasks</span>
-                          <p className="text-xs text-muted-foreground">Permanently delete all tasks in this column.</p>
+                          <span className="font-semibold text-[#9f2f2d]">Delete all tasks</span>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Permanently delete all tasks in this column.</p>
                         </div>
                       </label>
                     </div>
                   </div>
                 </>
               ) : (
-                <p className="text-[13px] text-foreground">This column is empty. Are you sure you want to delete it?</p>
+                <p className="text-xs text-foreground">This column is empty. Are you sure you want to delete it?</p>
               )}
 
               {deleteColumnMutation.error && (
@@ -890,7 +948,7 @@ export default function KanbanBoardPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-sm border border-border bg-background hover:bg-secondary text-foreground text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                  className="rounded-sm border border-border bg-muted hover:bg-muted/80 text-foreground text-xs h-8 px-4 shadow-none transition-all cursor-pointer"
                   onClick={() => setColumnToDelete(null)}
                 >
                   Cancel
@@ -899,7 +957,7 @@ export default function KanbanBoardPage() {
                   type="button"
                   variant="destructive"
                   disabled={deleteColumnMutation.isPending || (columnToDelete.tasks.length > 0 && deleteActionType === "move" && !targetColumnIdForMove)}
-                  className="rounded-sm bg-[#9f2f2d] hover:bg-[#b03a37] text-white text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                  className="rounded-sm bg-[#9f2f2d] hover:bg-[#b03a37] text-white text-xs h-8 px-4 shadow-none transition-all cursor-pointer"
                   onClick={handleDeleteColumnConfirm}
                 >
                   {deleteColumnMutation.isPending ? "Deleting..." : "Delete Column"}

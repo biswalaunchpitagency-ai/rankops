@@ -58,14 +58,15 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
   return (
     <form
       onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
-      className="space-y-4"
+      className="space-y-4 font-sans"
       autoComplete="off"
     >
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="name" className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Name</Label>
         <Input
           id="name"
           placeholder="Full name"
+          className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-9"
           aria-invalid={!!form.formState.errors.name}
           {...form.register("name")}
         />
@@ -73,13 +74,14 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
           <ErrorMessage message={form.formState.errors.name.message} />
         )}
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="email" className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
         <Input
           id="email"
           type="email"
           placeholder="user@example.com"
           autoComplete="off"
+          className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-9"
           aria-invalid={!!form.formState.errors.email}
           {...form.register("email")}
         />
@@ -87,13 +89,14 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
           <ErrorMessage message={form.formState.errors.email.message} />
         )}
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="password" className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
         <Input
           id="password"
           type="password"
           placeholder={isEdit ? "Leave blank to keep current" : "Minimum 8 characters"}
           autoComplete="new-password"
+          className="rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-9"
           aria-invalid={!!form.formState.errors.password}
           {...form.register("password")}
         />
@@ -107,8 +110,12 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
           fallback={`Failed to ${isEdit ? "update" : "create"} user`}
         />
       )}
-      <div className="flex justify-end">
-        <Button type="submit" disabled={mutation.isPending}>
+      <div className="flex justify-end pt-2">
+        <Button
+          type="submit"
+          disabled={mutation.isPending}
+          className="rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+        >
           {isEdit
             ? mutation.isPending ? "Saving..." : "Save Changes"
             : mutation.isPending ? "Creating..." : "Create User"}

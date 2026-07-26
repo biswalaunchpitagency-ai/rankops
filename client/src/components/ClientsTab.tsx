@@ -68,7 +68,6 @@ export default function ClientsTab({ workspaceId }: { workspaceId: string }) {
   });
 
   const totalHours = clients.reduce((s, c) => s + c.hoursUsedThisMonth, 0);
-  const totalRevenue = clients.reduce((s, c) => s + c.hoursUsedThisMonth * c.rate, 0);
 
   const handleDelete = () => {
     if (selectedClient && confirm(`Are you sure you want to delete ${selectedClient.name}?`)) {
@@ -80,37 +79,39 @@ export default function ClientsTab({ workspaceId }: { workspaceId: string }) {
   if (error) return <ErrorAlert error={error} fallback="Failed to load clients" />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* KPI Row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in-page">
         {[
-          { label: "Active Clients", value: clients.filter(c => c.status === "Active").length },
+          { label: "Active Clients", value: String(clients.filter(c => c.status === "Active").length) },
           { label: "Hours Logged (Month)", value: totalHours.toFixed(1) + "h" },
-          { label: "Est. Revenue (Month)", value: "$" + totalRevenue.toFixed(0) },
         ].map((kpi) => (
-          <div key={kpi.label} className="border border-border rounded-md p-4 bg-background">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{kpi.label}</p>
-            <p className="text-2xl font-semibold text-foreground mt-1">{kpi.value}</p>
+          <div key={kpi.label} className="border border-border rounded-md p-5 bg-card hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-205">
+            <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">{kpi.label}</span>
+            <span className="font-display text-3xl font-light text-foreground mt-1.5 block">{kpi.value}</span>
           </div>
         ))}
       </div>
 
       {/* Header + Add */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-normal text-foreground">Clients</h2>
-        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5 rounded-sm">
+      <div className="flex justify-between items-end border-b border-border pb-4">
+        <div>
+          <h1 className="font-display text-4xl font-light tracking-tight text-foreground leading-none">Clients</h1>
+          <p className="text-[13px] text-muted-foreground mt-2">Manage client retainers, hours, and deliverables</p>
+        </div>
+        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5 rounded-sm bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs cursor-pointer">
           <Plus className="h-3.5 w-3.5" /> Add Client
         </Button>
       </div>
 
       {/* Grid */}
       {clients.length === 0 ? (
-        <div className="border border-dashed border-border rounded-md p-10 text-center text-muted-foreground">
+        <div className="border border-dashed border-border rounded-md py-16 text-center text-muted-foreground">
           <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-[13px]">No clients yet. Add your first client to start tracking retainers.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in-page">
           {clients.map((c) => (
             <ClientCard key={c.id} client={c} onClick={() => setSelectedClient(c)} />
           ))}

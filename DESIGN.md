@@ -1,5 +1,5 @@
 ---
-name: Helpdesk
+name: Launchpit Agency
 description: Premium editorial workspace for customer support and engineering teams
 colors:
   primary: "#7c3aed"
@@ -74,13 +74,13 @@ components:
     padding: "24px"
 ---
 
-# Design System: Helpdesk
+# Design System: Launchpit Agency
 
 ## 1. Overview
 
 **Creative North Star: "The Editorial Workshop"**
 
-Helpdesk is designed with a premium, document-like editorial aesthetic that emphasizes content structure, legibility, and restraint. Instead of relying on typical high-saturation SaaS patterns, gradient fills, and heavy shadows, the interface focuses on precise alignment, generous whitespace, high typographic contrast, and a warm monochrome base. Color is treated as a premium semantic resource, reserved almost exclusively for status alerts and actionable indicators.
+Launchpit Agency is designed with a premium, document-like editorial aesthetic that emphasizes content structure, legibility, and restraint. Instead of relying on typical high-saturation SaaS patterns, gradient fills, and heavy shadows, the interface focuses on precise alignment, generous whitespace, high typographic contrast, and a warm monochrome base. Color is treated as a premium semantic resource, reserved almost exclusively for status alerts and actionable indicators.
 
 Key Characteristics:
 - **Clean White Canvas**: High-density flat white background `#ffffff` with minimal structural borders.
@@ -90,7 +90,7 @@ Key Characteristics:
 
 ## 2. Colors
 
-The Helpdesk palette is built on a clean monochrome foundation with functional desaturated accent zones.
+The Launchpit Agency palette is built on a clean monochrome foundation with functional desaturated accent zones.
 
 ### Primary
 - **Deep Violet** (#7c3aed / oklch(0.527 0.280 287)): Used for primary action affordances, active menu highlights, and focus ring borders.

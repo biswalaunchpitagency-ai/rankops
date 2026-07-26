@@ -28,9 +28,9 @@ export default function TicketsPage() {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Tickets</h1>
+    <div className="space-y-6 font-sans animate-in-page">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-4xl font-normal tracking-tight text-foreground">Tickets</h1>
       </div>
       <TicketsFilters filters={filters} onChange={setFilters} />
       <TicketsTable filters={filters} />

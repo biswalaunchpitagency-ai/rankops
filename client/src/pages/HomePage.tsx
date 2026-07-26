@@ -129,31 +129,31 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-8 pb-12 font-sans animate-in-page">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Overview of support tickets and performance metrics</p>
+        <h1 className="font-display text-4xl font-light tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-[13px] text-muted-foreground mt-1">Overview of support tickets and performance metrics</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {cards.map((card) => {
           const CardContentComponent = (
-            <Card className={card.link ? "hover:border-primary/50 hover:bg-muted/10 transition-all duration-200 cursor-pointer h-full" : "h-full"}>
+            <Card className={card.link ? "border border-border rounded-md hover:border-primary/30 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:bg-muted/10 transition-all duration-200 cursor-pointer h-full shadow-none" : "border border-border rounded-md h-full shadow-none bg-card"}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-[13px] font-medium text-muted-foreground">
+                  <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">
                     {card.title}
                   </CardTitle>
-                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                    <card.icon className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-7 w-7 rounded-sm bg-muted flex items-center justify-center border border-border">
+                    <card.icon className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {statsLoading ? (
-                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-8 w-20" />
                 ) : (
-                  <p className="text-3xl font-semibold tracking-tight">
+                  <p className="text-3xl font-light tracking-tight text-foreground">
                     {card.value}
                   </p>
                 )}
@@ -173,10 +173,10 @@ export default function HomePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Tickets Per Day Chart */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border border-border rounded-md shadow-none bg-card">
           <CardHeader>
-            <CardTitle>Tickets Per Day</CardTitle>
-            <CardDescription>Last 30 days volume</CardDescription>
+            <CardTitle className="text-base font-semibold tracking-tight text-foreground">Tickets Per Day</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">Last 30 days volume</CardDescription>
           </CardHeader>
           <CardContent>
             {volumeError ? (
@@ -189,7 +189,7 @@ export default function HomePage() {
             ) : (
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
                 <BarChart accessibilityLayer data={volume?.data}>
-                  <CartesianGrid vertical={false} />
+                  <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
                   <XAxis
                     dataKey="date"
                     tickLine={false}
@@ -204,6 +204,7 @@ export default function HomePage() {
                     }}
                     interval="preserveStartEnd"
                     minTickGap={40}
+                    style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}
                   />
                   <ChartTooltip
                     content={
@@ -222,7 +223,7 @@ export default function HomePage() {
                   <Bar
                     dataKey="tickets"
                     fill="var(--color-tickets)"
-                    radius={[4, 4, 0, 0]}
+                    radius={[2, 2, 0, 0]}
                   />
                 </BarChart>
               </ChartContainer>
@@ -231,12 +232,12 @@ export default function HomePage() {
         </Card>
 
         {/* Right Column: Tickets by Category */}
-        <Card>
+        <Card className="border border-border rounded-md shadow-none bg-card">
           <CardHeader>
-            <CardTitle>Tickets by Category</CardTitle>
-            <CardDescription>Distribution across support areas</CardDescription>
+            <CardTitle className="text-base font-semibold tracking-tight text-foreground">Tickets by Category</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">Distribution across support areas</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {statsLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-4 w-full" />
@@ -253,15 +254,15 @@ export default function HomePage() {
                   <Link
                     key={c.category}
                     to={`/tickets?category=${c.category}`}
-                    className="block group hover:bg-muted/50 p-2 rounded-lg transition-all duration-150 border border-transparent hover:border-muted"
+                    className="block group hover:bg-muted/30 p-2.5 rounded-md transition-all duration-150 border border-transparent hover:border-border"
                   >
-                    <div className="flex items-center justify-between mb-1.5 text-sm font-medium">
+                    <div className="flex items-center justify-between mb-1.5 text-xs font-medium text-foreground">
                       <span className="group-hover:text-primary transition-colors">{label}</span>
-                      <span className="text-muted-foreground">{c.count} ({percentage}%)</span>
+                      <span className="font-mono text-[10px] text-muted-foreground">{c.count} ({percentage}%)</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden border border-border/20">
                       <div
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        className="bg-primary h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -274,10 +275,10 @@ export default function HomePage() {
       </div>
 
       {/* Recent Active Tickets Section */}
-      <Card>
+      <Card className="border border-border rounded-md shadow-none bg-card">
         <CardHeader>
-          <CardTitle>Recent Active Tickets</CardTitle>
-          <CardDescription>The most recently received support requests</CardDescription>
+          <CardTitle className="text-base font-semibold tracking-tight text-foreground">Recent Active Tickets</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">The most recently received support requests</CardDescription>
         </CardHeader>
         <CardContent>
           {statsLoading ? (
@@ -292,12 +293,12 @@ export default function HomePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-muted">
-                    <th className="py-3 px-4 font-semibold text-muted-foreground">Subject</th>
-                    <th className="py-3 px-4 font-semibold text-muted-foreground">Customer</th>
-                    <th className="py-3 px-4 font-semibold text-muted-foreground">Category</th>
-                    <th className="py-3 px-4 font-semibold text-muted-foreground">Status</th>
-                    <th className="py-3 px-4 font-semibold text-muted-foreground">Created</th>
+                  <tr className="border-b border-border bg-secondary/50">
+                    <th className="py-2.5 px-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Subject</th>
+                    <th className="py-2.5 px-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Customer</th>
+                    <th className="py-2.5 px-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Category</th>
+                    <th className="py-2.5 px-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Status</th>
+                    <th className="py-2.5 px-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Created</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -312,18 +313,18 @@ export default function HomePage() {
                     return (
                       <tr
                         key={t.id}
-                        className="border-b border-muted/50 hover:bg-muted/30 transition-colors cursor-pointer group"
+                        className="border-b border-border/50 hover:bg-secondary/20 transition-colors cursor-pointer group"
                         onClick={() => navigate(`/tickets/${t.id}`)}
                       >
-                        <td className="py-3 px-4 font-medium group-hover:text-primary transition-colors">
+                        <td className="py-3 px-4 font-medium text-foreground group-hover:text-primary transition-colors">
                           {t.subject}
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground">{t.senderName}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{categoryName}</td>
+                        <td className="py-3 px-4 text-muted-foreground text-[13px]">{t.senderName}</td>
+                        <td className="py-3 px-4 text-muted-foreground text-[13px]">{categoryName}</td>
                         <td className="py-3 px-4">
                           <StatusBadge status={t.status as TicketStatus} />
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground text-xs">{relativeDate}</td>
+                        <td className="py-3 px-4 text-muted-foreground font-mono text-[11px]">{relativeDate}</td>
                       </tr>
                     );
                   })}

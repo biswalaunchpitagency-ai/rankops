@@ -1,5 +1,9 @@
 import dotenv from "dotenv";
-dotenv.config({ override: true });
+import path from "path";
+dotenv.config({
+  path: process.env.NODE_ENV === "test" ? path.resolve(process.cwd(), ".env.test") : undefined,
+  override: true
+});
 import { createOpenAI } from "@ai-sdk/openai";
 
 console.log("aiModel init: key =", process.env.OPENAI_API_KEY ? `${process.env.OPENAI_API_KEY.slice(0, 15)}...` : "undefined");

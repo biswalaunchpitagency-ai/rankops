@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,14 @@ interface Workspace {
 export default function WorkspacesPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [creating, setCreating] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [creating, setCreating] = useState(searchParams.get("create") === "true");
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setCreating(true);
+    }
+  }, [searchParams]);
 
   const { data: workspaces = [], isLoading } = useQuery<Workspace[]>({
     queryKey: ["workspaces"],
@@ -179,7 +186,10 @@ export default function WorkspacesPage() {
                   type="button"
                   variant="outline"
                   className="rounded-sm border border-border bg-background hover:bg-secondary text-foreground text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
-                  onClick={() => setCreating(false)}
+                  onClick={() => {
+                    setCreating(false);
+                    navigate("/workspaces", { replace: true });
+                  }}
                 >
                   Cancel
                 </Button>

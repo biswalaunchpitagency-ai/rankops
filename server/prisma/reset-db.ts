@@ -1,6 +1,9 @@
 import path from "path";
 import dotenv from "dotenv";
-dotenv.config({ path: path.resolve(import.meta.dirname, "../.env"), override: true });
+dotenv.config({
+  path: path.resolve(import.meta.dirname, process.env.NODE_ENV === "test" ? "../.env.test" : "../.env"),
+  override: true
+});
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, Role, WorkspaceRole, TaskPriority, TicketStatus, TicketCategory, SenderType } from "../src/generated/prisma/client";
@@ -159,7 +162,6 @@ async function main() {
         name: "Acme Corp",
         type: "SaaS",
         retainerHours: 40,
-        rate: 150,
         status: "Active",
         emailDomains: ["acme.com", "acmecorp.com"],
         notes: "Key SaaS client focused on product search traffic growth.",
@@ -172,7 +174,6 @@ async function main() {
         name: "Globex Retail",
         type: "E-commerce",
         retainerHours: 25,
-        rate: 120,
         status: "Active",
         emailDomains: ["globex.com", "globexretail.io"],
         notes: "Large e-commerce store optimizing product pages and checkout flow.",
@@ -185,7 +186,6 @@ async function main() {
         name: "Initech Consulting",
         type: "SaaS",
         retainerHours: 10,
-        rate: 100,
         status: "Paused",
         emailDomains: ["initech.com"],
         notes: "Paused client waiting on contract renewal.",
@@ -235,7 +235,7 @@ async function main() {
   await prisma.board.create({
     data: {
       id: boardId,
-      name: "Engineering Escalations",
+      name: "Engineering Tasks",
       workspaceId,
       createdAt: now,
       updatedAt: now,
@@ -393,7 +393,7 @@ async function main() {
     data: {
       id: task2Id,
       taskKey: "ACME-2",
-      title: "Write documentation for SAML SSO",
+      title: "Fix Stripe webhook signature mismatch",
       description: "Document settings for custom domain authentication.",
       priority: TaskPriority.medium,
       position: 0,

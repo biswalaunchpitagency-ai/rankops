@@ -10,7 +10,7 @@ export default defineConfig({
   outputDir: "./e2e/test-results",
   reporter: [["html", { outputFolder: "./e2e/playwright-report" }]],
   use: {
-    baseURL: "http://localhost:5174",
+    baseURL: "http://127.0.0.1:5174",
     trace: "on-first-retry",
   },
   projects: [
@@ -22,13 +22,20 @@ export default defineConfig({
   webServer: [
     {
       command: "bun run --cwd server --env-file=.env.test src/index.ts",
-      url: "http://localhost:3001/api/health",
+      url: "http://127.0.0.1:3001/api/health",
       reuseExistingServer: !process.env.CI,
+      env: {
+        NODE_ENV: "test",
+      },
     },
     {
-      command: "VITE_API_URL=http://localhost:3001 bun run --cwd client vite --port 5174",
-      url: "http://localhost:5174",
+      command: "bun run --cwd client vite --port 5174 --host 127.0.0.1",
+      url: "http://127.0.0.1:5174",
       reuseExistingServer: !process.env.CI,
+      env: {
+        NODE_ENV: "test",
+        VITE_API_URL: "http://127.0.0.1:3001",
+      },
     },
   ],
 });

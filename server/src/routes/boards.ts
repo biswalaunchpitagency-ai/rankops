@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/require-auth";
 import { validate } from "../lib/validate";
-import { createBoardSchema, moveTaskSchema } from "core/schemas/tasks.ts";
+import { createBoardSchema, moveTaskSchema, createColumnSchema, reorderColumnsSchema, deleteColumnSchema } from "core/schemas/tasks.ts";
 import prisma from "../db";
 
 const DEFAULT_COLUMNS = [
@@ -138,6 +138,188 @@ router.put("/tasks/move", requireAuth, async (req, res) => {
   }
 
   res.json(updated);
+});
+
+/** POST /api/boards/:id/columns - Add a custom column to a board */
+router.post("/:id/columns", requireAuth, async (req, res) => {
+  const data = validate(createColumnSchema, req.body, res);
+  if (!data) return;
+
+  const board = await prisma.board.findUnique({
+    where: { id: req.params.id as string },
+  });
+  if (!board) {
+    res.status(404).json({ error: "Board not found" });
+    return;
+  }
+
+  // Verify membership
+  const member = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId: board.workspaceId, userId: req.user.id } },
+  });
+  if (!member) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  // Get max column position
+  const maxCol = await prisma.boardColumn.findFirst({
+    where: { boardId: board.id },
+    orderBy: { position: "desc" },
+  });
+  const nextPosition = maxCol ? maxCol.position + 1 : 0;
+
+  const newColumn = await prisma.boardColumn.create({
+    data: {
+      name: data.name,
+      position: nextPosition,
+      boardId: board.id,
+    },
+  });
+
+  res.status(201).json(newColumn);
+});
+
+/** PUT /api/boards/:id/columns/reorder - Reorder stage columns on a board */
+router.put("/:id/columns/reorder", requireAuth, async (req, res) => {
+  const data = validate(reorderColumnsSchema, req.body, res);
+  if (!data) return;
+
+  const board = await prisma.board.findUnique({
+    where: { id: req.params.id as string },
+  });
+  if (!board) {
+    res.status(404).json({ error: "Board not found" });
+    return;
+  }
+
+  // Verify membership
+  const member = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId: board.workspaceId, userId: req.user.id } },
+  });
+  if (!member) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  // Verify columns belong to board
+  const dbCols = await prisma.boardColumn.findMany({
+    where: { boardId: board.id },
+    select: { id: true },
+  });
+  const dbColIds = new Set(dbCols.map((c) => c.id));
+  const validIds = data.columnIds.filter((id) => dbColIds.has(id));
+
+  // Run transaction to update column positions
+  await prisma.$transaction(
+    validIds.map((colId, index) =>
+      prisma.boardColumn.update({
+        where: { id: colId },
+        data: { position: index },
+      })
+    )
+  );
+
+  res.json({ success: true });
+});
+
+/** DELETE /api/boards/:id/columns/:columnId - Delete a column, moving or deleting tasks */
+router.delete("/:id/columns/:columnId", requireAuth, async (req, res) => {
+  const data = validate(deleteColumnSchema, req.body, res);
+  if (!data) return;
+
+  const board = await prisma.board.findUnique({
+    where: { id: req.params.id as string },
+  });
+  if (!board) {
+    res.status(404).json({ error: "Board not found" });
+    return;
+  }
+
+  // Verify membership
+  const member = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId: board.workspaceId, userId: req.user.id } },
+  });
+  if (!member) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const columnToDelete = await prisma.boardColumn.findFirst({
+    where: { id: req.params.columnId as string, boardId: board.id },
+  });
+  if (!columnToDelete) {
+    res.status(404).json({ error: "Column not found on this board" });
+    return;
+  }
+
+  // Safeguard: move or delete existing cards inside the column
+  if (data.targetColumnId) {
+    // Verify target column exists on this board
+    const targetCol = await prisma.boardColumn.findFirst({
+      where: { id: data.targetColumnId, boardId: board.id },
+    });
+    if (!targetCol) {
+      res.status(400).json({ error: "Target column does not exist on this board" });
+      return;
+    }
+
+    // Get max task position in target column
+    const maxTask = await prisma.task.findFirst({
+      where: { boardColumnId: data.targetColumnId },
+      orderBy: { position: "desc" },
+    });
+    let nextTaskPos = maxTask ? maxTask.position + 1 : 0;
+
+    // Get tasks in column to delete
+    const tasksToMove = await prisma.task.findMany({
+      where: { boardColumnId: columnToDelete.id },
+      orderBy: { position: "asc" },
+    });
+
+    // Move tasks and update positions in transaction
+    await prisma.$transaction([
+      ...tasksToMove.map((t, idx) =>
+        prisma.task.update({
+          where: { id: t.id },
+          data: {
+            boardColumnId: data.targetColumnId!,
+            position: nextTaskPos + idx,
+          },
+        })
+      ),
+      prisma.boardColumn.delete({
+        where: { id: columnToDelete.id },
+      }),
+    ]);
+  } else {
+    // Delete all tasks and the column itself (cascades or delete explicitly)
+    await prisma.$transaction([
+      prisma.task.deleteMany({
+        where: { boardColumnId: columnToDelete.id },
+      }),
+      prisma.boardColumn.delete({
+        where: { id: columnToDelete.id },
+      }),
+    ]);
+  }
+
+  // Reorder remaining columns to close any index gaps
+  const remainingCols = await prisma.boardColumn.findMany({
+    where: { boardId: board.id },
+    orderBy: { position: "asc" },
+  });
+
+  await prisma.$transaction(
+    remainingCols.map((c, idx) =>
+      prisma.boardColumn.update({
+        where: { id: c.id },
+        data: { position: idx },
+      })
+    )
+  );
+
+  res.json({ success: true });
 });
 
 export default router;

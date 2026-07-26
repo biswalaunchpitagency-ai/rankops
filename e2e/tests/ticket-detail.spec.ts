@@ -96,9 +96,12 @@ test.describe("Ticket Detail Page", () => {
         resp.request().method() === "PATCH" &&
         resp.status() === 200
     );
-    await page.getByRole("combobox").filter({ hasText: "Open" }).click();
+    await page.locator("span", { hasText: "Status" }).locator("xpath=..").getByRole("combobox").click();
     await page.getByRole("option", { name: /^Resolved$/ }).click();
+    await page.getByPlaceholder(/Organic sessions increased/i).fill("Test impact note");
+    await page.getByRole("button", { name: "Mark Complete" }).click();
     await statusPatch;
+    await expect(page.getByRole("listbox")).not.toBeVisible();
 
     // Update category
     const categoryPatch = page.waitForResponse(
@@ -107,9 +110,10 @@ test.describe("Ticket Detail Page", () => {
         resp.request().method() === "PATCH" &&
         resp.status() === 200
     );
-    await page.getByRole("combobox").filter({ hasText: "None" }).click();
+    await page.locator("span", { hasText: "Category" }).locator("xpath=..").getByRole("combobox").click();
     await page.getByRole("option", { name: /^Technical$/ }).click();
     await categoryPatch;
+    await expect(page.getByRole("listbox")).not.toBeVisible();
 
     // Update assignment
     const assignPatch = page.waitForResponse(
@@ -118,21 +122,22 @@ test.describe("Ticket Detail Page", () => {
         resp.request().method() === "PATCH" &&
         resp.status() === 200
     );
-    await page.getByRole("combobox").nth(2).click();
+    await page.locator("span", { hasText: "Assigned To" }).locator("xpath=..").getByRole("combobox").click();
     await page.getByRole("option", { name: /^Admin$/ }).click();
     await assignPatch;
+    await expect(page.getByRole("listbox")).not.toBeVisible();
 
     // Reload and verify all changes persisted
     await page.reload();
 
     await expect(
-      page.getByRole("combobox").filter({ hasText: "Resolved" })
+      page.locator("span", { hasText: "Status" }).locator("xpath=..").getByRole("combobox").filter({ hasText: "Resolved" })
     ).toBeVisible();
     await expect(
-      page.getByRole("combobox").filter({ hasText: "Technical" })
+      page.locator("span", { hasText: "Category" }).locator("xpath=..").getByRole("combobox").filter({ hasText: "Technical" })
     ).toBeVisible();
     await expect(
-      page.getByRole("combobox").filter({ hasText: "Admin" })
+      page.locator("span", { hasText: "Assigned To" }).locator("xpath=..").getByRole("combobox").filter({ hasText: "Admin" })
     ).toBeVisible();
   });
 
@@ -208,11 +213,14 @@ test.describe("Ticket Detail Page", () => {
         resp.request().method() === "PATCH" &&
         resp.status() === 200
     );
-    await page.getByRole("combobox").filter({ hasText: "Open" }).click();
+    await page.locator("span", { hasText: "Status" }).locator("xpath=..").getByRole("combobox").click();
     await page.getByRole("option", { name: /^Resolved$/ }).click();
+    await page.getByPlaceholder(/Organic sessions increased/i).fill("Test impact note");
+    await page.getByRole("button", { name: "Mark Complete" }).click();
     await statusPatch;
+    await expect(page.getByRole("listbox")).not.toBeVisible();
     await expect(
-      page.getByRole("combobox").filter({ hasText: "Resolved" })
+      page.locator("span", { hasText: "Status" }).locator("xpath=..").getByRole("combobox").filter({ hasText: "Resolved" })
     ).toBeVisible();
 
     // Update category
@@ -222,11 +230,12 @@ test.describe("Ticket Detail Page", () => {
         resp.request().method() === "PATCH" &&
         resp.status() === 200
     );
-    await page.getByRole("combobox").filter({ hasText: "None" }).click();
+    await page.locator("span", { hasText: "Category" }).locator("xpath=..").getByRole("combobox").click();
     await page.getByRole("option", { name: /^Technical$/ }).click();
     await categoryPatch;
+    await expect(page.getByRole("listbox")).not.toBeVisible();
     await expect(
-      page.getByRole("combobox").filter({ hasText: "Technical" })
+      page.locator("span", { hasText: "Category" }).locator("xpath=..").getByRole("combobox").filter({ hasText: "Technical" })
     ).toBeVisible();
 
     // Add a reply

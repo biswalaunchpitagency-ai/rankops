@@ -39,24 +39,26 @@ export default function TicketDetailPage() {
       )}
 
       {ticket && (
-        <div className="grid grid-cols-[1fr_auto] gap-6">
-          <div className="space-y-6">
+        <div className="grid grid-cols-[1fr_280px] gap-8 font-sans">
+          <div className="space-y-8">
             <TicketDetail ticket={ticket} />
 
             <TicketSummary ticket={ticket} />
 
-            <div className="space-y-3">
-              <h2>Replies</h2>
+            <div className="space-y-4">
+              <h2 className="font-display text-2xl font-normal tracking-tight text-foreground">Replies</h2>
               <ReplyThread ticket={ticket} />
             </div>
 
-            <div className="space-y-3 pb-16">
-              <h2>Add a Reply</h2>
+            <div className="space-y-4 pb-16">
+              <h2 className="font-display text-2xl font-normal tracking-tight text-foreground">Add a Reply</h2>
               <ReplyForm ticket={ticket} />
             </div>
           </div>
 
-          <UpdateTicket ticket={ticket} />
+          <div>
+            <UpdateTicket ticket={ticket} />
+          </div>
         </div>
       )}
     </div>

@@ -50,17 +50,13 @@ export default function ClientDetail({ open, onOpenChange, client, onEdit, onDel
                 <span>{client.hoursUsedThisMonth.toFixed(1)} / {client.retainerHours}h logged</span>
                 <span>{Math.round(pct)}% Used</span>
               </div>
-              <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-2">
+              <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
                     pct > 95 ? "bg-red-500" : pct > 75 ? "bg-yellow-500" : "bg-green-600"
                   }`}
                   style={{ width: `${pct}%` }}
                 />
-              </div>
-              <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Rate: ${client.rate}/h</span>
-                <span>Est. Value: ${(client.hoursUsedThisMonth * client.rate).toFixed(0)}</span>
               </div>
             </div>
           </div>

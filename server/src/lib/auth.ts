@@ -1,5 +1,9 @@
 import dotenv from "dotenv";
-dotenv.config({ override: true });
+import path from "path";
+dotenv.config({
+  path: process.env.NODE_ENV === "test" ? path.resolve(process.cwd(), ".env.test") : undefined,
+  override: true
+});
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { Role } from "core/constants/role.ts";

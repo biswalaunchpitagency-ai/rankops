@@ -12,6 +12,7 @@ export default function globalSetup() {
   const execEnv = {
     ...process.env,
     ...env.parsed,
+    NODE_ENV: "test",
     PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "Yes",
   };
 
@@ -23,7 +24,7 @@ export default function globalSetup() {
 
   console.log("Running seed...");
 
-  execSync("bun prisma/seed.ts", {
+  execSync("bun prisma/reset-db.ts", {
     cwd: serverDir,
     stdio: "inherit",
     env: execEnv,

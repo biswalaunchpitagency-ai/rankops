@@ -22,14 +22,14 @@ export default function TicketsFilters({
   onChange,
 }: TicketsFiltersProps) {
   return (
-    <div className="flex items-center gap-4 mb-4">
+    <div className="flex items-center gap-4 mb-4 font-sans">
       <div className="relative flex-1 max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search tickets..."
           value={filters.search ?? ""}
           onChange={(e) => onChange({ ...filters, search: e.target.value || undefined })}
-          className="pl-8"
+          className="pl-9 rounded-sm border border-border bg-background focus-visible:ring-primary shadow-none text-[13px] h-9"
         />
       </div>
 
@@ -39,13 +39,13 @@ export default function TicketsFilters({
           onChange({ ...filters, status: value === ALL ? undefined : (value as TicketFilters["status"]) })
         }
       >
-        <SelectTrigger className="w-[160px]">
+        <SelectTrigger className="w-[160px] rounded-sm border border-border bg-background focus:ring-primary shadow-none text-[13px] h-9">
           <SelectValue placeholder="All statuses" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All statuses</SelectItem>
+        <SelectContent className="rounded-sm">
+          <SelectItem value={ALL} className="rounded-sm text-[13px]">All statuses</SelectItem>
           {agentTicketStatuses.map((s) => (
-            <SelectItem key={s} value={s}>
+            <SelectItem key={s} value={s} className="rounded-sm text-[13px]">
               {statusLabel[s]}
             </SelectItem>
           ))}
@@ -58,14 +58,14 @@ export default function TicketsFilters({
           onChange({ ...filters, category: value === ALL ? undefined : (value as TicketFilters["category"]) })
         }
       >
-        <SelectTrigger className="w-[200px]">
+        <SelectTrigger className="w-[200px] rounded-sm border border-border bg-background focus:ring-primary shadow-none text-[13px] h-9">
           <SelectValue placeholder="All categories" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All categories</SelectItem>
-          <SelectItem value="general_question">General question</SelectItem>
-          <SelectItem value="technical_question">Technical question</SelectItem>
-          <SelectItem value="refund_request">Refund request</SelectItem>
+        <SelectContent className="rounded-sm">
+          <SelectItem value={ALL} className="rounded-sm text-[13px]">All categories</SelectItem>
+          <SelectItem value="general_question" className="rounded-sm text-[13px]">General question</SelectItem>
+          <SelectItem value="technical_question" className="rounded-sm text-[13px]">Technical question</SelectItem>
+          <SelectItem value="refund_request" className="rounded-sm text-[13px]">Refund request</SelectItem>
         </SelectContent>
       </Select>
     </div>

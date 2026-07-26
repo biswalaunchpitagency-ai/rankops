@@ -57,9 +57,18 @@ export default function EscalateToTaskButton({ ticket }: { ticket: Ticket }) {
     enabled: open,
   });
 
-  const selectedWorkspace = workspaces.find((w) => w.id === selectedWorkspaceId);
+  // Fetch the selected workspace detail to get boards (list endpoint doesn't include boards)
+  const { data: selectedWorkspace } = useQuery<Workspace>({
+    queryKey: ["workspace", selectedWorkspaceId],
+    queryFn: async () => {
+      const { data } = await axios.get<Workspace>(`/api/workspaces/${selectedWorkspaceId}`);
+      return data;
+    },
+    enabled: !!selectedWorkspaceId,
+  });
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<EscalateTicketInput>({
+
+  const { handleSubmit, setValue, formState: { errors } } = useForm<EscalateTicketInput>({
     resolver: zodResolver(escalateTicketSchema),
     defaultValues: {
       ticketId: ticket.id,
@@ -82,14 +91,14 @@ export default function EscalateToTaskButton({ ticket }: { ticket: Ticket }) {
   // Already has a linked task — show status badge instead
   if (ticket.linkedTask) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm">
-        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+      <div className="flex items-center gap-3 rounded-sm border border-border p-3 bg-[#edf3ec]/20 shadow-none font-sans">
+        <CheckCircle2 className="h-4 w-4 text-[#346538] shrink-0" />
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Escalated as task</p>
-          <p className="font-mono text-xs font-semibold truncate">{ticket.linkedTask.taskKey}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#346538]">Escalated</p>
+          <p className="font-mono text-xs font-semibold truncate text-foreground">{ticket.linkedTask.taskKey}</p>
           {ticket.linkedTask.boardColumn && (
-            <p className="text-xs text-muted-foreground">
-              Status: <span className="font-medium">{ticket.linkedTask.boardColumn.name}</span>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Status: <span className="font-medium text-foreground">{ticket.linkedTask.boardColumn.name}</span>
             </p>
           )}
         </div>
@@ -100,16 +109,23 @@ export default function EscalateToTaskButton({ ticket }: { ticket: Ticket }) {
 
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-1.5 w-full" onClick={() => setOpen(true)}>
-        <ArrowUpRight className="h-3.5 w-3.5" />
-        Escalate to Task
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5 w-full rounded-sm border border-border bg-background hover:bg-secondary text-foreground transition-all duration-200 active:scale-98 shadow-none cursor-pointer"
+        onClick={() => setOpen(true)}
+      >
+        <ArrowUpRight className="h-3.5 w-3.5 text-[#7c3aed]" />
+        <span className="text-[13px] font-medium">Escalate to Task</span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Escalate Ticket to Task</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="rounded-sm border border-border shadow-lg bg-background font-sans max-w-md">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="font-display text-2xl font-normal tracking-tight text-foreground">
+              Escalate Ticket to Task
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
               AI will analyze the ticket and create a structured engineering task on the selected board.
             </DialogDescription>
           </DialogHeader>
@@ -119,7 +135,9 @@ export default function EscalateToTaskButton({ ticket }: { ticket: Ticket }) {
             className="space-y-4 pt-1"
           >
             <div className="space-y-1.5">
-              <Label>Workspace</Label>
+              <Label className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">
+                Workspace
+              </Label>
               <Select
                 onValueChange={(v) => {
                   setSelectedWorkspaceId(v);
@@ -127,39 +145,41 @@ export default function EscalateToTaskButton({ ticket }: { ticket: Ticket }) {
                   setValue("boardId", "");
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="rounded-sm border-border focus:ring-primary shadow-none text-[13px]">
                   <SelectValue placeholder="Select workspace..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-sm">
                   {workspaces.map((ws) => (
-                    <SelectItem key={ws.id} value={ws.id}>
+                    <SelectItem key={ws.id} value={ws.id} className="rounded-sm text-[13px]">
                       {ws.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {errors.workspaceId && (
-                <p className="text-xs text-destructive">{errors.workspaceId.message}</p>
+                <p className="text-[11px] text-destructive">{errors.workspaceId.message}</p>
               )}
             </div>
 
             {selectedWorkspace && (
               <div className="space-y-1.5">
-                <Label>Board</Label>
+                <Label className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">
+                  Board
+                </Label>
                 <Select onValueChange={(v) => setValue("boardId", v)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-sm border-border focus:ring-primary shadow-none text-[13px]">
                     <SelectValue placeholder="Select board..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    {selectedWorkspace.boards.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
+                  <SelectContent className="rounded-sm">
+                    {(selectedWorkspace.boards ?? []).map((b) => (
+                      <SelectItem key={b.id} value={b.id} className="rounded-sm text-[13px]">
                         {b.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {errors.boardId && (
-                  <p className="text-xs text-destructive">{errors.boardId.message}</p>
+                  <p className="text-[11px] text-destructive">{errors.boardId.message}</p>
                 )}
               </div>
             )}
@@ -169,18 +189,27 @@ export default function EscalateToTaskButton({ ticket }: { ticket: Ticket }) {
             )}
 
             {escalateMutation.isPending && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-lg border px-3 py-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                AI is analyzing the ticket and generating task details...
+              <div className="flex items-center gap-2.5 text-xs text-muted-foreground rounded-sm border border-border bg-secondary/50 px-3 py-2.5">
+                <Loader2 className="h-4 w-4 animate-spin text-[#7c3aed]" />
+                <span>AI is analyzing the ticket and generating task details...</span>
               </div>
             )}
 
-            <div className="flex gap-2 pt-1">
-              <Button type="submit" disabled={escalateMutation.isPending || !selectedWorkspaceId}>
-                {escalateMutation.isPending ? "Creating..." : "Escalate with AI"}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <div className="flex gap-2 pt-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-sm border border-border bg-background hover:bg-secondary text-foreground text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+                onClick={() => setOpen(false)}
+              >
                 Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={escalateMutation.isPending || !selectedWorkspaceId}
+                className="rounded-sm bg-[#111111] hover:bg-[#222222] text-[#ffffff] dark:bg-[#ffffff] dark:hover:bg-[#eeeeee] dark:text-[#111111] text-[13px] font-medium transition-all active:scale-98 cursor-pointer shadow-none px-4 py-2"
+              >
+                {escalateMutation.isPending ? "Creating..." : "Escalate with AI"}
               </Button>
             </div>
           </form>
