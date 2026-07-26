@@ -110,43 +110,45 @@ model Account {
 }
 
 model Ticket {
-  id           Int             @id @default(autoincrement())
-  subject      String
-  body         String
-  bodyHtml     String?
-  status       TicketStatus    @default(new)
-  category     TicketCategory?
-  senderName   String
-  senderEmail  String
-  assignedToId String?
-  assignedTo   User?           @relation(fields: [assignedToId], references: [id])
-  workspaceId  String
-  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  clientId     String?
-  client       Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  phase        String?
-  impact       String?
-  checklist    Json?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  replies      Reply[]
-  linkedTask   Task?
-  timeLogs     TimeLog[]
+  id             Int             @id @default(autoincrement())
+  subject        String
+  body           String
+  bodyHtml       String?
+  status         TicketStatus    @default(new)
+  category       TicketCategory?
+  senderName     String
+  senderEmail    String
+  assignedToId   String?
+  assignedTo     User?           @relation(fields: [assignedToId], references: [id])
+  workspaceId    String
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  clientId       String?
+  client         Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  phase          String?
+  impact         String?
+  checklist      Json?
+  gmailMessageId String?         @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  replies        Reply[]
+  linkedTask     Task?
+  timeLogs       TimeLog[]
 
   @@map("ticket")
 }
 
 model Reply {
-  id         Int        @id @default(autoincrement())
-  body       String
-  bodyHtml   String?
-  senderType SenderType
-  ticketId   Int
-  ticket     Ticket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId     String?
-  user       User?      @relation(fields: [userId], references: [id])
-  createdAt  DateTime   @default(now())
-  isDraft    Boolean    @default(false)
+  id             Int        @id @default(autoincrement())
+  body           String
+  bodyHtml       String?
+  senderType     SenderType
+  ticketId       Int
+  ticket         Ticket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?      @relation(fields: [userId], references: [id])
+  gmailMessageId String?    @unique
+  createdAt      DateTime   @default(now())
+  isDraft        Boolean    @default(false)
 
   @@map("reply")
 }
@@ -297,7 +299,6 @@ model Client {
   name          String
   type          String?
   retainerHours Float     @default(0)
-  rate          Float     @default(0)
   status        String    @default("Active")
   notes         String?
   emailDomains  String[]
