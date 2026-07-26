@@ -10,28 +10,27 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { Role } from "core/constants/role.ts";
 import prisma from "../db";
 
-// Build a trusted-origins checker that covers:
-// 1. Statically configured origins (TRUSTED_ORIGINS env var)
-// 2. Any Vercel preview URL for this project (*.vercel.app)
+// Statically configured origins from env var (comma-separated)
 const staticOrigins = process.env.TRUSTED_ORIGINS?.split(",").map((o) => o.trim()) ?? [];
-const trustedOriginsChecker = (origin: string) => {
-  if (staticOrigins.includes(origin)) return true;
-  try {
-    const url = new URL(origin);
-    if (url.hostname.endsWith(".vercel.app")) return true;
-  } catch {
-    // ignore malformed origins
-  }
-  return false;
-};
+
 
 export const auth = betterAuth({
   basePath: "/api/auth",
+  // trustedOrigins must return string[] — Better Auth spreads the result into its origins array
   trustedOrigins: (request) => {
-    // Better Auth may call this during initialization with no request object
-    if (!request || !request.headers) return false;
+    if (!request?.headers) return staticOrigins;
     const origin = request.headers.get("origin") || "";
-    return trustedOriginsChecker(origin);
+    if (!origin) return staticOrigins;
+    // Accept any Vercel preview URL in addition to explicitly configured origins
+    try {
+      const url = new URL(origin);
+      if (url.hostname.endsWith(".vercel.app")) {
+        return [...staticOrigins, origin];
+      }
+    } catch {
+      // ignore malformed origins
+    }
+    return staticOrigins;
   },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
