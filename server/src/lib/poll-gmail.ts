@@ -109,8 +109,9 @@ export async function pollGmailOnce() {
   try {
     const accessToken = await getAccessToken();
 
-    // List unread messages in the Primary inbox only, maximum 5 at a time
-    const query = encodeURIComponent("is:unread category:primary");
+    // List unread messages based on custom query filter (defaults to label:Support), maximum 5 at a time
+    const queryFilter = process.env.GMAIL_QUERY_FILTER || "is:unread label:Support";
+    const query = encodeURIComponent(queryFilter);
     const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=5`;
     const listResponse = await fetch(listUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },

@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
-dotenv.config({ override: true });
 import path from "path";
+dotenv.config({
+  path: process.env.NODE_ENV === "test" ? path.resolve(process.cwd(), ".env.test") : undefined,
+  override: true
+});
 import Sentry from "./lib/sentry";
 import express from "express";
 import cors from "cors";
@@ -112,9 +115,10 @@ if (!process.env.WEBHOOK_SECRET) {
 
 async function boot() {
   await startQueue();
-  startGmailPolling();
+  const pollInterval = Number(process.env.GMAIL_POLLING_INTERVAL || 60000);
+  startGmailPolling(pollInterval);
 
-  const server = app.listen(port, () => {
+  const server = app.listen(Number(port), "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 
