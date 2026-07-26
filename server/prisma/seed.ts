@@ -13,9 +13,10 @@ async function main() {
   const password = process.env.SEED_ADMIN_PASSWORD;
 
   if (!email || !password) {
-    throw new Error(
-      "SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set in .env"
+    console.warn(
+      "WARNING: SEED_ADMIN_EMAIL or SEED_ADMIN_PASSWORD is not set. Skipping admin user seeding."
     );
+    return;
   }
 
   const now = new Date();
