@@ -9,7 +9,15 @@ import axios from "axios";
 import App from "./App.tsx";
 
 // Configure global Axios defaults for production cross-origin requests
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
+const getAxiosBaseURL = () => {
+  const url = import.meta.env.VITE_API_URL;
+  if (!url) return "";
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    return `https://${url}`;
+  }
+  return url;
+};
+axios.defaults.baseURL = getAxiosBaseURL();
 axios.defaults.withCredentials = true;
 
 const queryClient = new QueryClient();
