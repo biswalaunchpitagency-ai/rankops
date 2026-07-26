@@ -4,7 +4,7 @@
   "workspaces": ["client", "server", "core"],
   "scripts": {
     "build": "bun run db:generate",
-    "start": "bun run server/src/index.ts",
+    "start": "bun run db:push && bun run server/prisma/seed.ts && bun run server/src/index.ts",
     "dev": "concurrently --kill-others -n \"server,client\" -c \"blue.bold,magenta.bold\" \"bun --cwd server dev\" \"bun --cwd client dev\"",
     "db:reset": "tsx server/prisma/reset-db.ts",
     "db:push": "prisma db push --schema=server/prisma/schema.prisma --accept-data-loss",
