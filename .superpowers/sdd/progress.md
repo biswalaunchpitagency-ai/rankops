@@ -1,6 +1,6 @@
 # Gmail Sync and Idempotency Progress Ledger
 
-- [ ] Task 1: Prisma Schema Update and DB Synchronization
+- [x] Task 1: Prisma Schema Update and DB Synchronization (commits 360b747..a972bd2, review clean)
 - [ ] Task 2: Implement Idempotency Checking in Email Processing
 - [ ] Task 3: Backend In-Memory Sync Lock and pollGmailOnce Updates
 - [ ] Task 4: Add Express API Routes for Sync
