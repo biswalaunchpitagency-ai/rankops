@@ -5,7 +5,12 @@ import { BrowserRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./lib/theme";
 import "./index.css";
+import axios from "axios";
 import App from "./App.tsx";
+
+// Configure global Axios defaults for production cross-origin requests
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
+axios.defaults.withCredentials = true;
 
 const queryClient = new QueryClient();
 
