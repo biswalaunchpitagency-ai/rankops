@@ -37,4 +37,4 @@ COPY --from=build /app/server/src/generated ./server/src/generated
 ENV NODE_ENV=production
 EXPOSE 3000
 
-CMD ["sh", "-c", "cd server && bunx prisma migrate deploy && cd .. && bun run server/src/index.ts"]
+CMD ["sh", "-c", "cd server && bunx prisma migrate deploy && bun run prisma/seed.ts && cd .. && bun run server/src/index.ts"]
