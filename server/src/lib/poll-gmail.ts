@@ -189,6 +189,13 @@ export async function pollGmailOnce() {
             gmailMessageId: msg.id, // Passed to ensure database idempotency
           });
 
+          // processIncomingEmail returns undefined when it cannot assign the email
+          // (e.g. no workspace exists yet) — skip further processing for this message
+          if (!result) {
+            console.warn(`[Gmail Poller] Skipped message ${msg.id} — processIncomingEmail returned no result.`);
+            continue;
+          }
+
           console.log(`[Gmail Poller] Successfully processed message ${msg.id} as a new ${result.type}.`);
 
           // Mark message as read (remove UNREAD label)
