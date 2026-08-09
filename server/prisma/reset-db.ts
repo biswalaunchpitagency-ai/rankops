@@ -7,7 +7,6 @@ dotenv.config({
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, Role, WorkspaceRole, TaskPriority, TicketStatus, TicketCategory, SenderType } from "../src/generated/prisma/client";
-import { hashPassword } from "better-auth/crypto";
 import { AI_AGENT_ID } from "core/constants/ai-agent.ts";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
@@ -42,13 +41,11 @@ async function main() {
 
   const now = new Date();
 
-  // 2. Seed Admin User
+  // 2. Seed Admin User (Passwordless for Google SSO)
   const email = process.env.SEED_ADMIN_EMAIL || "yadnyeshsunilborole@gmail.com";
-  const password = process.env.SEED_ADMIN_PASSWORD || "abc";
   const adminId = crypto.randomUUID();
-  const hashedAdminPassword = await hashPassword(password);
 
-  console.log(`Seeding Admin User: ${email}...`);
+  console.log(`Seeding Admin User for Google SSO: ${email}...`);
   await prisma.user.create({
     data: {
       id: adminId,
@@ -56,18 +53,7 @@ async function main() {
       email,
       emailVerified: true,
       role: Role.admin,
-      createdAt: now,
-      updatedAt: now,
-    },
-  });
-
-  await prisma.account.create({
-    data: {
-      id: crypto.randomUUID(),
-      accountId: adminId,
-      providerId: "credential",
-      userId: adminId,
-      password: hashedAdminPassword,
+      onboardedAt: now,
       createdAt: now,
       updatedAt: now,
     },
@@ -82,16 +68,16 @@ async function main() {
       email: "ai@helpdesk.local",
       emailVerified: true,
       role: Role.agent,
+      onboardedAt: now,
       createdAt: now,
       updatedAt: now,
     },
   });
 
-  // 4. Seed normal Agent User
+  // 4. Seed normal Agent User (Passwordless for Google SSO)
   const agentId = crypto.randomUUID();
   const agentEmail = "agent@example.com";
-  const hashedAgentPassword = await hashPassword("password123");
-  console.log(`Seeding Agent User: ${agentEmail}...`);
+  console.log(`Seeding Agent User for Google SSO: ${agentEmail}...`);
   await prisma.user.create({
     data: {
       id: agentId,
@@ -99,17 +85,7 @@ async function main() {
       email: agentEmail,
       emailVerified: true,
       role: Role.agent,
-      createdAt: now,
-      updatedAt: now,
-    },
-  });
-  await prisma.account.create({
-    data: {
-      id: crypto.randomUUID(),
-      accountId: agentId,
-      providerId: "credential",
-      userId: agentId,
-      password: hashedAgentPassword,
+      onboardedAt: null, // Pending invite status
       createdAt: now,
       updatedAt: now,
     },
@@ -360,7 +336,6 @@ async function main() {
     seededTickets.push(ticket);
   }
 
-
   // 10. Seed Tasks (escalated from tickets)
   console.log("Seeding Tasks & Escalations...");
   
@@ -448,7 +423,7 @@ async function main() {
         ticketId: seededTickets[2]!.id,
         userId: null,
         createdAt: new Date(now.getTime() - 30 * 60 * 1000), // 30 mins ago
-      }
+      },
     ],
   });
 
