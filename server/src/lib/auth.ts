@@ -10,12 +10,15 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { Role } from "core/constants/role.ts";
 import prisma from "../db";
 
+import { sendAdminOnboardingNotification } from "./send-email";
+
 // Statically configured origins from env var (comma-separated)
 const staticOrigins = process.env.TRUSTED_ORIGINS?.split(",").map((o) => o.trim()) ?? [];
 
 
 export const auth = betterAuth({
   basePath: "/api/auth",
+  baseURL: process.env.BETTER_AUTH_URL || process.env.CLIENT_URL || "http://localhost:5173",
   // trustedOrigins must return string[] — Better Auth spreads the result into its origins array
   trustedOrigins: (request) => {
     if (!request?.headers) return staticOrigins;
@@ -35,9 +38,50 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  emailAndPassword: {
-    enabled: true,
-    disableSignUp: true,
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      prompt: "select_account",
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const user = await prisma.user.findUnique({
+            where: { id: session.userId },
+          });
+
+          if (!user || user.deletedAt) {
+            return false; // Reject session creation for unauthorized or soft-deleted users
+          }
+
+          // Check if this is the user's first time logging in (Onboarding Confirmation)
+          if (user.onboardedAt === null) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { onboardedAt: new Date() },
+            });
+
+            // Notify all system administrators
+            const admins = await prisma.user.findMany({
+              where: { role: Role.admin, deletedAt: null },
+              select: { email: true },
+            });
+            const adminEmails = admins.map((a) => a.email);
+            if (adminEmails.length > 0) {
+              await sendAdminOnboardingNotification(adminEmails, {
+                name: user.name,
+                email: user.email,
+              });
+            }
+          }
+
+          return true;
+        },
+      },
+    },
   },
   plugins: [
     // Enables `Authorization: Bearer <token>` session lookup on every endpoint,
@@ -50,6 +94,11 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         defaultValue: Role.agent,
+        input: false,
+      },
+      onboardedAt: {
+        type: "date",
+        required: false,
         input: false,
       },
       deletedAt: {
