@@ -59,6 +59,7 @@ model User {
   emailVerified Boolean
   image         String?
   role          Role      @default(agent)
+  onboardedAt   DateTime?
   createdAt     DateTime
   updatedAt     DateTime
   deletedAt     DateTime?
