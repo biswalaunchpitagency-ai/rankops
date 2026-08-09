@@ -205,3 +205,41 @@ export function getClientUrl(req?: any): string {
   const origins = process.env.TRUSTED_ORIGINS?.split(",");
   return origins?.[0] || "http://localhost:5173";
 }
+
+export async function sendInvitationEmail(toEmail: string, userName: string, clientUrl: string): Promise<void> {
+  const loginUrl = `${clientUrl}/login`;
+  await sendEmailJob({
+    to: toEmail,
+    subject: "You've been invited to Launchpit Agency",
+    body: `Hello ${userName},\n\nYou have been invited to join Launchpit Agency. Please log in using Google SSO at: ${loginUrl}`,
+    bodyHtml: `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e4e4e7; border-radius: 8px; background-color: #ffffff;">
+        <div style="margin-bottom: 20px; display: inline-block; padding: 6px 12px; background-color: #111111; color: #ffffff; border-radius: 4px; font-weight: bold; font-size: 14px;">Launchpit Agency</div>
+        <h2 style="color: #111111; margin-top: 0;">Welcome to Launchpit Agency</h2>
+        <p style="color: #3f3f46; font-size: 14px;">Hello <strong>${userName}</strong>,</p>
+        <p style="color: #3f3f46; font-size: 14px; line-height: 1.5;">You have been invited to join our workspace. Please sign in using your Google account to get started.</p>
+        <div style="margin: 28px 0;">
+          <a href="${loginUrl}" style="background-color: #111111; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px; display: inline-block;">Sign in with Google</a>
+        </div>
+        <p style="font-size: 12px; color: #71717a; margin-top: 24px;">If the button doesn't work, copy and paste this link in your browser:<br/><a href="${loginUrl}" style="color: #2563eb;">${loginUrl}</a></p>
+      </div>
+    `,
+  });
+}
+
+export async function sendAdminOnboardingNotification(adminEmails: string[], newUser: { name: string; email: string }): Promise<void> {
+  for (const adminEmail of adminEmails) {
+    await sendEmailJob({
+      to: adminEmail,
+      subject: `User Onboarded: ${newUser.name}`,
+      body: `Notification: ${newUser.name} (${newUser.email}) has successfully completed their initial Google SSO login and joined the workspace.`,
+      bodyHtml: `
+        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e4e4e7; border-radius: 8px; background-color: #ffffff;">
+          <div style="margin-bottom: 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #16a34a;">New Team Member</div>
+          <h3 style="color: #111111; margin-top: 0;">User Onboarding Confirmation</h3>
+          <p style="color: #3f3f46; font-size: 14px; line-height: 1.5;"><strong>${newUser.name}</strong> (<a href="mailto:${newUser.email}" style="color: #2563eb;">${newUser.email}</a>) has completed their first Google SSO sign-in and is now active on Launchpit Agency.</p>
+        </div>
+      `,
+    });
+  }
+}
