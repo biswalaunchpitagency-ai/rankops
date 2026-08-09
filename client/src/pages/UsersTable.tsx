@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { Role } from "core/constants/role.ts";
 import ErrorAlert from "@/components/ErrorAlert";
@@ -30,7 +30,6 @@ interface UsersTableProps {
 }
 
 export default function UsersTable({ onEdit, onDelete }: UsersTableProps) {
-  const queryClient = useQueryClient();
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [resendStatus, setResendStatus] = useState<{ id: string; success: boolean; message: string } | null>(null);
 
