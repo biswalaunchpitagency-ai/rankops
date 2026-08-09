@@ -18,7 +18,13 @@ const staticOrigins = process.env.TRUSTED_ORIGINS?.split(",").map((o) => o.trim(
 
 export const auth = betterAuth({
   basePath: "/api/auth",
-  baseURL: process.env.BETTER_AUTH_URL || process.env.CLIENT_URL || "http://localhost:5173",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production" ? true : false,
+    },
+  },
   // trustedOrigins must return string[] — Better Auth spreads the result into its origins array
   trustedOrigins: (request) => {
     if (!request?.headers) return staticOrigins;

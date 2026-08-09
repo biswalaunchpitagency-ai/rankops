@@ -84,6 +84,12 @@ app.all("/api/auth/{*any}", authLimiter, (req, res, next) => {
 
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  const clientUrl = process.env.CLIENT_URL || "https://rankops-client.vercel.app";
+  const queryString = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  res.redirect(`${clientUrl}${queryString}`);
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
