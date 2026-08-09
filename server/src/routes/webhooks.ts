@@ -34,6 +34,11 @@ router.post("/inbound-email", requireWebhookSecret, upload.any(), async (req, re
     bodyHtml: data.bodyHtml,
   });
 
+  if (!result) {
+    res.status(500).json({ error: "Failed to process email" });
+    return;
+  }
+
   if (result.type === "reply") {
     res.status(200).json({ ticket: result.ticket, reply: result.reply });
   } else {
