@@ -52,6 +52,23 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          // Check if this email is pre-registered (via admin invitation or seed)
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          });
+
+          if (!existingUser || existingUser.deletedAt) {
+            // Block account creation for uninvited users
+            return false;
+          }
+
+          return true;
+        },
+      },
+    },
     session: {
       create: {
         before: async (session) => {
