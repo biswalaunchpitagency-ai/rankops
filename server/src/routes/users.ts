@@ -27,7 +27,32 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    res.status(409).json({ error: "Email already exists" });
+    if (!existing.deletedAt) {
+      res.status(409).json({ error: "Email already exists" });
+      return;
+    }
+
+    // User was previously soft-deleted — restore and re-invite
+    const user = await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        name,
+        role: role || Role.agent,
+        deletedAt: null,
+        onboardedAt: null,
+        emailVerified: false,
+        updatedAt: new Date(),
+      },
+      select: { id: true, name: true, email: true, role: true, onboardedAt: true, createdAt: true },
+    });
+
+    // Clean up old linked accounts so Google SSO can re-link cleanly
+    await prisma.account.deleteMany({ where: { userId: existing.id } });
+
+    const clientUrl = getClientUrl(req);
+    await sendInvitationEmail(user.email, user.name, clientUrl);
+
+    res.status(200).json({ user });
     return;
   }
 
@@ -83,7 +108,7 @@ router.put("/:id", requireAuth, requireAdmin, async (req, res) => {
   const { name, email, role } = data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing && existing.id !== id) {
+  if (existing && existing.id !== id && !existing.deletedAt) {
     res.status(409).json({ error: "Email already exists" });
     return;
   }
